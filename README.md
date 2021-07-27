@@ -1,9 +1,9 @@
-# fantacalcio-py
- Piccolo tool per guidarci all'asta spendendo poco
+
 
 # COSA E' FANTACALCIO-PY?
  Un tool che scarica i database più recenti degli ultimi due campionati, il database del campionato attuale e le quotazioni di quest'ultimo.
  Il programma provvederà poi a incrociare i dati mostrando l'andamento di un giocatore, la sua media negli ultimi due campionati (rispettivamente indicati con x e y nell'excel di output) e in quello attuale, la sua probabile titolarità futura (dato interessante se siamo ad inizio campionato) e due indici, detti di convenienza.
+ Tutti questi dati verranno poi messi in vari Excel (Attaccanti Centrocampisti Difensori Portieri e result che è quello generale) per essere comparati.
 
 # COSA INDICA LA CONVENIENZA MO?
  Per convenienza si intende il rapporto tra il valore di base in asta e il suo rendimento passato o attuale (indicato con "convenienza today")
@@ -14,3 +14,4 @@
 
  # DISCLAIMER
  Se perdete il fanta non è colpa mia, io ci so arrivato secondo co sta roba.
+ Il tool utilizza i csv prodotti da Fantagazzetta, tutti i dati processati sono loro, anche la quotazione di Muriel che è più bassa di quella di Ronaldo. Io boh.
