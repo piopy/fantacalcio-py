@@ -16,3 +16,6 @@
  - Se perdete il fanta non è colpa mia, io ci so arrivato secondo co sta roba.
  - Servono pandas e wget per funzionare
  - Il tool utilizza i csv prodotti da Fantagazzetta, tutti i dati processati sono loro, anche la quotazione di Muriel che è più bassa di quella di Ronaldo. Io boh.
+
+ ### SPECIALI RINGRAZIAMENTI
+ a cttynul per l'idea base 
