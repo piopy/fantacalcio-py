@@ -10,7 +10,8 @@ https://www.fantacalcio.it/Servizi/Excel.ashx?type=2&r=1&t=1614489243000&s=2020-
 https://www.fantacalcio.it/statistiche-serie-a/2020-21/fantacalcio/medie
 '''
 
-
+import warnings
+warnings.filterwarnings("ignore")
 import pandas as pd
 import os
 import wget, requests
@@ -40,13 +41,18 @@ def scarica(stagione):
     print("\nDataset stagione {} completato.".format(stagione))
     return True
 
+def prune(dataset):
+	temp=pd.DataFrame()
+	temp['Nome']=dataset['Nome']
+	temp['Pg']=dataset['Pg']
+	temp['Mf']=dataset['Mf']
+	return temp
 	
 if __name__=='__main__':
 	manuale=False
-	scelta=input("Inserire stagione (es. 2020-21): ")
+	scelta=input("Inserire stagione nel formato yyyy-yy (es. 2021-22): ")
 	if scelta=='': 
-		print("Errore in input")
-		exit(0)
+		scelta='2021-22'
 
 	anno1=int((scelta.split('-'))[0])
 	scelta2=str(anno1-1)+'-'+str(anno1%2000)
@@ -69,89 +75,29 @@ if __name__=='__main__':
 	#['Id', 'R', 'Nome', 'Squadra', 'Qt. A', 'Qt. I', 'Diff.']
 
 	#droppo le colonne che non voglio utilizzare nel dataset finale
-
 	dataset_quotazioni = dataset_quotazioni.drop('Id',1)
-
-	dataset_quotazioni = dataset_quotazioni.drop('Squadra',1)
-	# dataset_quotazioni = dataset_quotazioni.drop('Qt. A',1)
 	dataset_quotazioni = dataset_quotazioni.drop('Diff.',1)
-
 	#debug
-	list(dataset_quotazioni.columns.values)
-	#['Nome', 'Qt. A']
+	#list(dataset_quotazioni.columns.values)
+	#['R', 'Nome', 'Squadra', 'Qt. A', 'Qt. I']
 
 	dataset_statistiche1 = pd.read_excel("./Statistiche_Fantacalcio_"+scelta3+"_Fantagazzetta.xlsx",header = 1,engine='openpyxl')
-
 	dataset_statistiche2 = pd.read_excel("./Statistiche_Fantacalcio_"+scelta2+"_Fantagazzetta.xlsx",header = 1,engine='openpyxl')
-
 	dataset_statistiche3 = pd.read_excel("./Statistiche_Fantacalcio_"+scelta1+"_Fantagazzetta.xlsx",header = 1,engine='openpyxl')
 
 	calciatorioggi=list(dataset_statistiche3['Nome']+'/'+dataset_statistiche3['Squadra'])
 	calciatoriold=list(dataset_statistiche2['Nome']+'/'+dataset_statistiche2['Squadra'])
-
+	calciatoriold_dict = dict(zip(dataset_statistiche2['Nome'].to_list(), dataset_statistiche2['Squadra'].to_list()))
 	giveatry=[i.split('/')[0] for i in calciatorioggi if i not in calciatoriold]
 
 	#debug 
 	list(dataset_statistiche1.columns.values)
 	#['Id', 'R', 'Nome', 'Squadra', 'Pg', 'Mv', 'Mf', 'Gf', 'Gs', 'Rp', 'Rc', 'R+', 'R-', 'Ass', 'Asf', 'Amm', 'Esp', 'Au']
-
-	#droppo le colonne che non voglio utilizzare nel dataset finale
-
-	dataset_statistiche1 = dataset_statistiche1.drop('Id',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Squadra',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('R',1)
-	#Cancello la media voto, considero la media voto con bonus/malus
-	dataset_statistiche1 = dataset_statistiche1.drop('Mv',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Gf',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Gs',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Rp',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Rc',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('R+',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('R-',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Ass',1)
-	# dataset_statistiche1 = dataset_statistiche1.drop('Asf',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Amm',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Esp',1)
-	dataset_statistiche1 = dataset_statistiche1.drop('Au',1)
-
-	list(dataset_statistiche1.columns.values)
-	#ruolo, nome, partite_giocate,media_fantacalcio
-	#['R', 'Nome', 'Pg', 'Mf']
-
-
-	dataset_statistiche2 = dataset_statistiche2.drop('Id',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Squadra',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('R',1)
-	#Cancello la media voto, considero la media voto con bonus/malus
-	dataset_statistiche2 = dataset_statistiche2.drop('Mv',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Gf',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Gs',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Rp',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Rc',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('R+',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('R-',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Ass',1)
-	# dataset_statistiche2 = dataset_statistiche2.drop('Asf',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Amm',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Esp',1)
-	dataset_statistiche2 = dataset_statistiche2.drop('Au',1)
-
-	dataset_statistiche3 = dataset_statistiche3.drop('Id',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Squadra',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('R',1)
-	#Cancello la media voto, considero la media voto con bonus/malus
-	dataset_statistiche3 = dataset_statistiche3.drop('Mv',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Gf',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Gs',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Rp',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Rc',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('R+',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('R-',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Ass',1)
-	# dataset_statistiche3 = dataset_statistiche3.drop('Asf',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Amm',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Esp',1)
-	dataset_statistiche3 = dataset_statistiche3.drop('Au',1)
+	#nome, partite_giocate,media_fantacalcio
+	#['Nome', 'Pg', 'Mf']
+	dataset_statistiche1=prune(dataset_statistiche1)
+	dataset_statistiche2=prune(dataset_statistiche2)
+	dataset_statistiche3=prune(dataset_statistiche3)
 
 	df1 =pd.DataFrame(dataset_quotazioni)
 	df2 =pd.DataFrame(dataset_statistiche1)
@@ -161,9 +107,7 @@ if __name__=='__main__':
 	dataset = df1.merge(df2,on="Nome").merge(df3,on="Nome").merge(df4,on="Nome")
 	#result = dataset.sort_values(by='Qt. I')
 
-
-
-
+################# core 
 	media_giocatori = [];
 	for index, row in dataset.iterrows():
 		if  row.Pg_x > 0 or row.Pg_y > 0:	
@@ -225,7 +169,7 @@ if __name__=='__main__':
 	prob=[]
 	for index, row in dataset.iterrows():
 		if row.Nome in giveatry:	 
-			prob.append('Y')
+			prob.append('Y - ex '+calciatoriold_dict[row.Nome])
 		else:
 			prob.append('N')
 
@@ -249,14 +193,17 @@ if __name__=='__main__':
 			total.append(0)
 
 	dataset["convenienza_today"] = total
-
-	result = dataset.sort_values(by="convenienza_today",ascending=False)
+	if giocatemax < 2: result = dataset.sort_values(by="convenienza_inizio_campionato (considera solo le due annate precedenti concluse)",ascending=False)
+	else: result = dataset.sort_values(by="convenienza_today",ascending=False)
 	#drop mediaGiocatori	media	mediaGiocatori_today	media_today
 
 	result = result.drop('mediaGiocatori',1) 
 	result = result.drop('media',1) 
 	result = result.drop('mediaGiocatori_today',1) 
 	result = result.drop('media_today',1) 
+
+########### generating output ##################
+
 	try:os.mkdir("./res")
 	except:pass
 	print("Generating xls...")
