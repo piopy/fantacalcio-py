@@ -16,30 +16,33 @@ import pandas as pd
 import os
 import wget, requests
 
-def quotazioni():
-    url='https://www.fantacalcio.it/quotazioni-fantacalcio'
-    #www.fantacalcio.it//Servizi/
-    req=requests.get(url).text
-    req=[i for i in req.splitlines() if 'www.fantacalcio.it//Servizi/' in i][0]
-    # req=req.replace('            location.href = "//','https://').replace('"','')
-    req=req.replace('            location.href = "','').replace('"','')
-    try:os.remove('./Quotazioni_Fantacalcio_Ruoli_Fantagazzetta2.xlsx')
-    except: pass
-    wget.download(req,out='./Quotazioni_Fantacalcio_Ruoli_Fantagazzetta2.xlsx')
-    print('\n Download delle quotazioni completato\n')
-    return True
+# hanno cambiato struttura del sito quindi li scarico a mano e fine perchè non ho voglia di automatizzare il login. 
+# se qualcuno ha sta sbatta, il pulsante fork sta in alto a destra
 
-def scarica(stagione):
-    url='https://www.fantacalcio.it/statistiche-serie-a/'+stagione+'/fantacalcio/medie'
-    #            location.href = "//www.fantacalcio.it/Servizi/
-    req=requests.get(url).text
-    req=[i for i in req.splitlines() if 'www.fantacalcio.it/Servizi/' in i and stagione in i][0]
-    req=req.replace('            location.href = "','').replace('"','')
-    try:os.remove('./Statistiche_Fantacalcio_'+stagione+'_Fantagazzetta.xlsx')
-    except: pass
-    wget.download(req,out='./Statistiche_Fantacalcio_'+stagione+'_Fantagazzetta.xlsx')
-    print("\nDataset stagione {} completato.".format(stagione))
-    return True
+# def quotazioni():
+#     url='https://www.fantacalcio.it/quotazioni-fantacalcio'
+#     #www.fantacalcio.it//Servizi/
+#     req=requests.get(url).text
+#     req=[i for i in req.splitlines() if 'www.fantacalcio.it//Servizi/' in i][0]
+#     # req=req.replace('            location.href = "//','https://').replace('"','')
+#     req=req.replace('            location.href = "','').replace('"','')
+#     try:os.remove('./Quotazioni_Fantacalcio_Ruoli_Fantagazzetta2.xlsx')
+#     except: pass
+#     wget.download(req,out='./Quotazioni_Fantacalcio_Ruoli_Fantagazzetta2.xlsx')
+#     print('\n Download delle quotazioni completato\n')
+#     return True
+
+# def scarica(stagione):
+#     url='https://www.fantacalcio.it/statistiche-serie-a/'+stagione+'/fantacalcio/medie'
+#     #            location.href = "//www.fantacalcio.it/Servizi/
+#     req=requests.get(url).text
+#     req=[i for i in req.splitlines() if 'www.fantacalcio.it/Servizi/' in i and stagione in i][0]
+#     req=req.replace('            location.href = "','').replace('"','')
+#     try:os.remove('./Statistiche_Fantacalcio_'+stagione+'_Fantagazzetta.xlsx')
+#     except: pass
+#     wget.download(req,out='./Statistiche_Fantacalcio_'+stagione+'_Fantagazzetta.xlsx')
+#     print("\nDataset stagione {} completato.".format(stagione))
+#     return True
 
 def prune(dataset):
 	temp=pd.DataFrame()
@@ -50,23 +53,24 @@ def prune(dataset):
 	
 if __name__=='__main__':
 	manuale=False
-	scelta=input("Inserire stagione nel formato yyyy-yy (es. 2021-22): ")
+	scelta=input("Inserire stagione nel formato yyyy-yy (es. 2022-23): ")
 	if scelta=='': 
-		scelta='2021-22'
+		scelta='2022-23'
 
 	anno1=int((scelta.split('-'))[0])
 	scelta2=str(anno1-1)+'-'+str(anno1%2000)
 	scelta3=str(anno1-2)+'-'+str(anno1%2000-1)
-	print("Scaricando le statistiche di ",scelta,scelta2,scelta3)
+	# print("Scaricando le statistiche di ",scelta,scelta2,scelta3) # questo codice si fa sempre più brutto gente
 	scelta1=scelta #non ho sbatta di rinominare
-	try:
-		quotazioni()
-		scarica(scelta1)
-		scarica(scelta2)
-		scarica(scelta3)
-	except Exception as e: 
-		print("\nErrore nei download\n",e)
-		exit(0)
+	# try:
+	# 	quotazioni()
+
+	# 	scarica(scelta1)
+	# 	scarica(scelta2)
+	# 	scarica(scelta3)
+	# except Exception as e: 
+	# 	print("\nErrore nei download\n",e)
+	# 	exit(0)
 
 	dataset_quotazioni = pd.read_excel("./Quotazioni_Fantacalcio_Ruoli_Fantagazzetta2.xlsx",header = 1,engine='openpyxl')
 
@@ -118,14 +122,13 @@ if __name__=='__main__':
 
 	dataset["mediaGiocatori"] = media_giocatori
 	media = []
-
+	
 	for index, row in dataset.iterrows():
 		if  row.mediaGiocatori > 0:	 
-			media.append(row.mediaGiocatori/row["Qt. I"])
+			media.append(row.mediaGiocatori/row["Qt.I"])
 		else:
 			media.append(0)
 	dataset["media"] = media
-	#result = dataset.sort_values(by="media")
 
 	giocatemax=0
 	for index, row in dataset.iterrows():
@@ -149,7 +152,7 @@ if __name__=='__main__':
 
 	for index, row in dataset.iterrows():
 		if  row.mediaGiocatori_today > 0:	 
-			media.append(row.mediaGiocatori/row["Qt. I"])
+			media.append(row.mediaGiocatori/row["Qt.I"])
 		else:
 			media.append(0)
 	dataset["media_today"] = media
@@ -193,14 +196,26 @@ if __name__=='__main__':
 			total.append(0)
 
 	dataset["convenienza_today"] = total
+
+	total = []
+	for index, row in dataset.iterrows():
+		if  row.convenienza_today > row.mediaGiocatori*row.media*row['Mf_y']:	 
+			total.append("U")
+		else:
+			total.append("D")
+	dataset["Up/Down"] = total 
+
 	if giocatemax < 2: result = dataset.sort_values(by="convenienza_inizio_campionato (considera solo le due annate precedenti concluse)",ascending=False)
 	else: result = dataset.sort_values(by="convenienza_today",ascending=False)
+	
 	#drop mediaGiocatori	media	mediaGiocatori_today	media_today
 
 	result = result.drop('mediaGiocatori',1) 
 	result = result.drop('media',1) 
 	result = result.drop('mediaGiocatori_today',1) 
 	result = result.drop('media_today',1) 
+
+
 
 ########### generating output ##################
 
