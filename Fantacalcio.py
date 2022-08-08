@@ -11,16 +11,16 @@ from loguru import logger
 ruoli = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]
 
 skills = {
-    "Fuoriclasse": 2,
-    "Titolare": 2,
+    "Fuoriclasse": 1,
+    "Titolare": 3,
     "Buona Media": 2,
-    "Goleador": 3,
+    "Goleador": 4,
     "Assistman": 2,
     "Piazzati": 2,
-    "Rigorista": 3,
+    "Rigorista": 5,
     "Giovane talento": 2,
-    "Panchinaro": -2,
-    "Falloso": -3,
+    "Panchinaro": -4,
+    "Falloso": -2,
     "Outsider": 2,
 }
 
@@ -178,10 +178,10 @@ def appetibilita(df: pd.DataFrame) -> float:
             appetibilita = float(row[7]) * int(row[5]) / 38 
 
         # media pesata fantamedia * convenienza rispetto alla quotazione * media scorso anno
+        appetibilita=appetibilita*row['Punteggio']*30/100
         if float(row[1]) == 0: pt=1
         else: pt=float(row[1])
         appetibilita = (
-            # appetibilita * appetibilita / pt * 100 / 40 * float(row[2])
              appetibilita / pt * 100 / 40 
         ) 
 
@@ -207,6 +207,8 @@ def appetibilita(df: pd.DataFrame) -> float:
             appetibilita -= 1
         if row["Resistenza infortuni"] > 60:
             appetibilita += 4
+        if row["Resistenza infortuni"] == 60:
+            appetibilita += 2
 
         res.append(appetibilita)
 
