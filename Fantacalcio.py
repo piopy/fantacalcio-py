@@ -251,9 +251,10 @@ if __name__ == "__main__":
             temp[0],
             temp[18],
             temp[1],
-            temp[20],
             temp[21],
             temp[19],
+            temp[12],
+            temp[20],
             temp[6],
             temp[2],
             temp[5],
@@ -267,12 +268,11 @@ if __name__ == "__main__":
             temp[10],
             temp[13],
             temp[14],
-            temp[12],
             temp[15],
         ]
     ]
     df.sort_values(by="Convenienza", ascending=False)
 
     # df.to_csv("giocatori_appet.csv", index=False)
-    df.to_excel("giocatori_excel2.xls")
+    df.to_excel("giocatori_excel.xls")
     logger.debug("Finito!")
