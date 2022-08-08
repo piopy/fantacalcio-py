@@ -43,7 +43,7 @@ def get_giocatori(ruolo: str) -> list:
 
 
 def get_attributi(url: str) -> dict:
-    time.sleep(randint(0, 2000) / 1000)
+    time.sleep(randint(0, 1000) / 1000)
     attributi = dict()
     html = requests.get(url.strip())
     soup = BeautifulSoup(html.content, "html.parser")
@@ -157,7 +157,7 @@ def appetibilita(df: pd.DataFrame) -> float:
 
     for index, row in df.iterrows():
         if int(row[-1]) > giocatemax:
-            giocatemax = row[-1]
+            giocatemax = int(row[-1])
 
     for index, row in df.iterrows():
         appetibilita = 0

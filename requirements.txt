@@ -3,3 +3,4 @@ beautifulsoup
 pandas
 loguru
 tqdm
+requests
