@@ -178,7 +178,7 @@ def appetibilita(df: pd.DataFrame) -> float:
             appetibilita = float(row[7]) * int(row[5]) / 38 
 
         # media pesata fantamedia * convenienza rispetto alla quotazione * media scorso anno
-        appetibilita=appetibilita*row['Punteggio']*30/100
+        appetibilita=appetibilita*float(row['Punteggio'])*30/100
         if float(row[1]) == 0: pt=1
         else: pt=float(row[1])
         appetibilita = (
@@ -197,7 +197,7 @@ def appetibilita(df: pd.DataFrame) -> float:
 
         if row["Nuovo acquisto"]:
             appetibilita -= 2
-        if row["Buon investimento"] == 60:
+        if int(row["Buon investimento"]) == 60:
             appetibilita += 3
         if row["Consigliato prossima giornata"]:
             appetibilita += 1
@@ -205,9 +205,9 @@ def appetibilita(df: pd.DataFrame) -> float:
             appetibilita += 2
         if row["Infortunato"]:
             appetibilita -= 1
-        if row["Resistenza infortuni"] > 60:
+        if int(row["Resistenza infortuni"]) > 60:
             appetibilita += 4
-        if row["Resistenza infortuni"] == 60:
+        if int(row["Resistenza infortuni"]) == 60:
             appetibilita += 2
 
         res.append(appetibilita)
