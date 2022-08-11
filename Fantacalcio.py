@@ -7,6 +7,11 @@ import requests
 from tqdm import tqdm
 import pandas as pd
 from loguru import logger
+import telebot
+import datetime
+
+API_TOKEN = 'inserisciapikey'
+bot = telebot.TeleBot(API_TOKEN)
 
 ruoli = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]
 
@@ -275,6 +280,14 @@ if __name__ == "__main__":
     ]
     df.sort_values(by="Convenienza", ascending=False)
 
+    #df.to_json("resdasda.json")
     #df.to_csv("giocatori_appet.csv", index=False)
-    df.to_excel("giocatori_excel.xls")
+    x = datetime.datetime.now()
+    symb=[" ",".","-",":"]
+    for value in symb:
+        x=str(x).replace(value,"")
+    res="giocatori"+x+".xls"
+    df.to_excel(res)
+    doc = open(res, 'rb')
+    bot.send_document("inserisci_idchat_gruppo",doc)
     logger.debug("Finito!")
