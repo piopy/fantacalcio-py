@@ -17,4 +17,5 @@
  - Servono pandas e bs4 per funzionare
  - Il tool utilizza i csv prodotti da fantacalciopedia, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open
 
- 
+
+Nato da un'idea di cttynul 

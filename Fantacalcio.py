@@ -43,7 +43,7 @@ def get_giocatori(ruolo: str) -> list:
 
 
 def get_attributi(url: str) -> dict:
-    time.sleep(randint(0, 1000) / 1000)
+    time.sleep(randint(0, 2000) / 1000)
     attributi = dict()
     html = requests.get(url.strip())
     soup = BeautifulSoup(html.content, "html.parser")
@@ -156,7 +156,7 @@ def appetibilita(df: pd.DataFrame) -> float:
     giocatemax = 1
 
     for index, row in df.iterrows():
-        if int(row[-1]) > giocatemax:
+        if int(row[-1]) > int(giocatemax):
             giocatemax = int(row[-1])
 
     for index, row in df.iterrows():
@@ -178,7 +178,7 @@ def appetibilita(df: pd.DataFrame) -> float:
             appetibilita = float(row[7]) * int(row[5]) / 38 
 
         # media pesata fantamedia * convenienza rispetto alla quotazione * media scorso anno
-        appetibilita=appetibilita*row['Punteggio']*30/100
+        appetibilita=appetibilita*float(row['Punteggio'])*30/100
         if float(row[1]) == 0: pt=1
         else: pt=float(row[1])
         appetibilita = (
