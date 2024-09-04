@@ -4,3 +4,4 @@ pandas
 loguru
 tqdm
 requests
+xlsxwriter
