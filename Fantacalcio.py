@@ -276,5 +276,5 @@ if __name__ == "__main__":
     df.sort_values(by="Convenienza", ascending=False)
 
     # df.to_csv("giocatori_appet.csv", index=False)
-    df.to_excel("giocatori_excel.xls")
+    df.to_excel("giocatori_excel.xlsx")
     logger.debug("Finito!")
