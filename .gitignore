@@ -1,6 +1,7 @@
-EVOLUZIONE/
-old/
 *.ipynb
-giocatori_urls.txt
-giocatori.csv
-giocatori_excel.xls
+.venv/*
+poetry.lock
+__pycache__/
+*.csv
+*.xlsx
+*.txt

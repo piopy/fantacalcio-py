@@ -1,21 +1,62 @@
-# Versione 2 -  Ancora più brutto
+# Fantacalcio-PY
 
-# COSA E' FANTACALCIO-PY?
- Un tool che scarica i database più recenti degli ultimi due campionati.
- Il programma provvederà poi a incrociare i dati mostrando l'andamento di un giocatore, la sua media negli ultimi due campionati la sua probabile titolarità futura (dato interessante se siamo ad inizio campionato) e due indici, uno di convenienza estrapolato dai dati e uno preso dal sito fantacalciopedia.
- Tutti questi dati verranno poi messi in un Excel per essere comparati.
+Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fantacalcio. Il programma esegue le seguenti operazioni:
 
-# COSA INDICA LA CONVENIENZA MO?
- Per convenienza si intende il rapporto tra il valore di base in asta e il suo rendimento passato o attuale (indicato con "convenienza today")
- Ad esempio Immobile è una macchina da gol ma la sua convenienza sarà più bassa rispetto a Vlahovic, che ha non solo una media simile, ma un prezzo base inferiore.
- Allo stesso tempo, pur essendo a parità di prezzo base, un giocatore come Luis Alberto sarà più conveniente di Barak per via delle partite giocate e del rendimento.
- Ovviamente questo tool è da usare leggendo l'output dato dallo stesso programma, poichè è stato ideato non per prendere giocatori come Immobile, bensì per fare colpi a basso prezzo di giocatori ovviamente non blasonati ma comunque utili alla causa (es. un Deulofeu o uno Arnautovic presi a poco che si son dimostrati degni del ruolo di riserva).
- Può capitare di prendere giocatori come Verde che vi faranno rimpiangere di aver usato il mio algoritmo per guidarvi all'asta, ma vabbè mo lo metto come disclaimer.
+1.  **Recupero Dati**: Scarica i dati dei calciatori da due fonti:
+    *   **FPEDIA**: per le statistiche della stagione in corso.
+    *   **FSTATS**: per le statistiche della stagione precedente.
+2.  **Elaborazione e Unione**: Pulisce, elabora e unisce i dati provenienti dalle diverse fonti in un unico dataset.
+3.  **Calcolo Indice di Convenienza**: Calcola un indice di "convenienza" per ogni giocatore. Questo indice mette in rapporto il valore di un giocatore (prezzo base all'asta) con il suo rendimento passato e attuale, aiutando a identificare giocatori sottovalutati.
+4.  **Salvataggio Risultati**: I risultati finali, ordinati per indice di convenienza, vengono salvati in un file Excel.
 
- # DISCLAIMER
- - Se perdete il fanta non è colpa mia, io ci so arrivato secondo co sta roba. E l'anno dopo primo.
- - Servono pandas e bs4 per funzionare
- - Il tool utilizza i csv prodotti da fantacalciopedia, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open
+## Disclaimer
 
+- Se perdete il fanta non è colpa mia, io ci so arrivato secondo co sta roba. E l'anno dopo primo.
+- Il tool utilizza i csv prodotti da fpedia, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open.
 
-Nato da un'idea di cttynul 
+*Refactor del codice di cttynul*
+
+## Prerequisiti
+
+Per utilizzare questo progetto, è necessario avere installato **Python 3.10** o superiore e **Poetry** per la gestione delle dipendenze.
+
+## Installazione
+
+1.  **Clonare la repository (se non già fatto)**:
+    ```bash
+    git clone <url_della_repository>
+    cd fantacalcio-py-main
+    ```
+
+2.  **Installare le dipendenze**:
+    Questo progetto utilizza `poetry` per gestire le dipendenze. Per installarle, eseguire il seguente comando dalla root del progetto:
+    ```bash
+    poetry install
+    ```
+    Questo comando creerà un ambiente virtuale e installerà tutte le librerie necessarie specificate nel file `pyproject.toml`.
+
+## Configurazione
+
+Il progetto richiede delle credenziali per accedere a `FSTATS`. Queste credenziali vanno inserite in un file `.env` nella root del progetto.
+
+Il file `config.py` contiene altre configurazioni, come gli URL per lo scraping e i percorsi dei file di output. Non dovrebbe essere necessario modificarlo per il funzionamento base.
+
+## Avvio del Progetto
+
+Per avviare l'analisi completa, eseguire lo script `main.py` utilizzando `poetry`.
+
+```bash
+poetry run python main.py
+```
+
+Lo script eseguirà tutti i passaggi (recupero, elaborazione, calcolo e salvataggio).
+
+## Output
+
+Al termine dell'esecuzione, verranno creati dei file Excel nella directory `data/output`. 
+
+## WIP
+
+- [ ] Messa a punto del calcolo dell'indice di convenienza
+- [ ] Formazione consigliata
+- [ ] Frontend
