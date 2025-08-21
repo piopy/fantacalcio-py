@@ -60,3 +60,7 @@ Al termine dell'esecuzione, verranno creati dei file Excel nella directory `data
 - [ ] Messa a punto del calcolo dell'indice di convenienza
 - [ ] Formazione consigliata
 - [ ] Frontend
+
+## Stars
+
+[![Star History Chart](https://api.star-history.com/svg?repos=piopy/fantacalcio-py&type=Date)](https://www.star-history.com/#piopy/fantacalcio-py&Date)
