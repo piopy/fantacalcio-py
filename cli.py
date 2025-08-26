@@ -153,14 +153,47 @@ def analyze(ctx, source, output, top):
             output_path = os.path.join(config.OUTPUT_DIR, "fpedia_analysis.xlsx")
             df_final_sorted = df_final.sort_values(by="Convenienza Potenziale", ascending=False)
             
-            # Define columns for output (simplified from main.py)
-            key_columns = [
-                "Nome", "Ruolo", "Squadra", "Convenienza Potenziale", "Convenienza", 
-                "Punteggio", f"Fantamedia anno {config.ANNO_CORRENTE-1}-{config.ANNO_CORRENTE}",
-                "Presenze campionato corrente"
+            # Define comprehensive columns for output (EXACT copy from main.py)
+            output_columns = [
+                # Key Info
+                "Nome",
+                "Ruolo",
+                "Squadra",
+                # Calculated Indexes
+                "Convenienza Potenziale",
+                "Convenienza",
+                "Punteggio",
+                # Current Season Stats
+                f"Fantamedia anno {config.ANNO_CORRENTE-1}-{config.ANNO_CORRENTE}",
+                f"Presenze campionato corrente",
+                # Previous Season Stats
+                f"Fantamedia anno {config.ANNO_CORRENTE-2}-{config.ANNO_CORRENTE-1}",
+                "Partite giocate",
+                # Qualitative Info
+                "Trend",
+                "Skills",
+                "Consigliato prossima giornata",
+                "Buon investimento",
+                "Resistenza infortuni",
+                "Infortunato",
+                # Legacy
+                f"FM su tot gare {config.ANNO_CORRENTE-1}-{config.ANNO_CORRENTE}",
+                "Presenze previste",
+                "Gol previsti",
+                "Assist previsti",
+                "Ruolo",
+                "Skills",
+                "Buon investimento",
+                "Resistenza infortuni",
+                "Consigliato prossima giornata",
+                "Nuovo acquisto",
+                "Infortunato",
+                "Squadra",
+                "Trend",
+                "Presenze campionato corrente",
             ]
-            available_columns = [col for col in key_columns if col in df_final_sorted.columns]
-            df_final_sorted[available_columns].to_excel(output_path, index=False)
+            final_columns = [col for col in output_columns if col in df_final_sorted.columns]
+            df_final_sorted[final_columns].to_excel(output_path, index=False)
             
             progress.update(task, completed=True)
             rprint(f"✅ [green]FPEDIA analysis saved to {output_path}[/green]")
@@ -178,12 +211,92 @@ def analyze(ctx, source, output, top):
             output_path = os.path.join(config.OUTPUT_DIR, "FSTATS_analysis.xlsx")
             df_final_sorted = df_final.sort_values(by="Convenienza Potenziale", ascending=False)
             
-            key_columns = [
-                "Nome", "Ruolo", "Squadra", "Convenienza Potenziale", "Convenienza",
-                "fantacalcioFantaindex", "fanta_avg", "presences"
+            # Define comprehensive columns for output (EXACT copy from main.py)
+            output_columns = [
+                # Key Info
+                "Nome",
+                "Ruolo",
+                "Squadra",
+                # Calculated Indexes
+                "Convenienza Potenziale",
+                "Convenienza",
+                "fantacalcioFantaindex",
+                # Key Performance Indicators
+                "fanta_avg",
+                "avg",
+                "presences",
+                # Core Stats
+                "goals",
+                "assists",
+                # Potential Stats
+                "xgFromOpenPlays",
+                "xA",
+                # Disciplinary
+                "yellowCards",
+                "redCards",
+                # Legacy
+                "injured",
+                "banned",
+                "mantra_position",
+                "fantacalcio_position",
+                "birth_date",
+                "foot_name",
+                "fantacalcioPlayerId",
+                "fantacalcioTeamName",
+                "appearances",
+                "matchesInStart",
+                "mins_played",
+                "pagella",
+                "fantacalcioRanking",
+                "fantacalcioFantaindex",
+                "fantacalcioPosition",
+                "assists",
+                "goals",
+                "goals90min",
+                "goalsFromOpenPlays",
+                "xgFromOpenPlays",
+                "xgFromOpenPlays/90min",
+                "xA",
+                "xA90min",
+                "redCards",
+                "yellowCards",
+                "successfulPenalties",
+                "penalties",
+                "gkPenaltiesSaved",
+                "gkCleanSheets",
+                "gkConcededGoals",
+                "openPlaysGoalsConceded",
+                "openPlaysXgConceded",
+                "fantamediaPred",
+                "fantamediaPredRoundId",
+                "matchConvocation",
+                "matchesWithGrade",
+                "perc_matchesStarted",
+                "perc_matchesWithGrade",
+                "percMinsPlayed",
+                "expectedFantamediaMean",
+                "External_breakout_Index",
+                "Shot_on_goal_Index",
+                "Offensive_actions_Index",
+                "Pass_forward_accuracy_Index",
+                "Air_challenge_offensive_Index",
+                "Cross_accuracy_Index",
+                "Converge_in_the_center_Index",
+                "Accompany_the_offensive_action_Index",
+                "Offensive_verticalization_Index",
+                "Received_pass_Index",
+                "Attacking_area_Index",
+                "Offensive_field_presence_Index",
+                "Pass_accuracy_Index",
+                "Pass_leading_chances_Index",
+                "Deep_runs_Index",
+                "Defense_solidity_Index",
+                "Set_piece_attack_Index",
+                "Shot_on_target_Index",
+                "Dribbles_successful_Index",
             ]
-            available_columns = [col for col in key_columns if col in df_final_sorted.columns]
-            df_final_sorted[available_columns].to_excel(output_path, index=False)
+            final_columns = [col for col in output_columns if col in df_final_sorted.columns]
+            df_final_sorted[final_columns].to_excel(output_path, index=False)
             
             progress.update(task, completed=True)
             rprint(f"✅ [green]FSTATS analysis saved to {output_path}[/green]")
