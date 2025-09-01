@@ -40,13 +40,13 @@ def get_giocatori_urls() -> list:
                 "The website structure may have changed, or the request was blocked."
             )
         else:
-            with open(config.GIOCATORI_URLS_FILE, "w") as fp:
+            with open(config.GIOCATORI_URLS_FILE, "w", encoding="utf-8") as fp:
                 for item in giocatori_urls:
                     fp.write(f"{item}\n")
             logger.debug(f"{len(giocatori_urls)} player URLs saved.")
     else:
         logger.debug("Reading player URLs from cache.")
-        with open(config.GIOCATORI_URLS_FILE, "r") as fp:
+        with open(config.GIOCATORI_URLS_FILE, "r", encoding="utf-8") as fp:
             giocatori_urls = fp.readlines()
     return [url.strip() for url in giocatori_urls]
 
