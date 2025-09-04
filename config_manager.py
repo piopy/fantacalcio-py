@@ -3,6 +3,7 @@ Configuration management with YAML support for Fantacalcio-PY
 """
 import os
 import yaml
+import base64
 from pathlib import Path
 from typing import Dict, Any, Optional
 from dataclasses import dataclass, asdict
@@ -62,9 +63,9 @@ class AppConfig:
     output_dir: str = "data/output" 
     cache_dir: str = "data/cache"
     
-    # API URLs (base64 decoded values from original config)
-    fpedia_base_url: str = "https://www.fantacalciopedia.com"
-    fstats_base_url: str = "https://api.app.fantagoat.it/api"
+    # API URLs (base64 encoded values)
+    fpedia_base_url: str = "aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20="
+    fstats_base_url: str = "aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk="
 
 
 class ConfigManager:
@@ -93,6 +94,9 @@ class ConfigManager:
         # Return default configuration
         return self._get_default_config()
     
+    def _b64decode(self, stringa):
+        return base64.b64decode(stringa).decode("utf-8")
+    
     def _get_default_config(self) -> AppConfig:
         """Get default configuration"""
         return AppConfig(
@@ -112,8 +116,8 @@ class ConfigManager:
             data_dir=data.get('data_dir', 'data'),
             output_dir=data.get('output_dir', 'data/output'),
             cache_dir=data.get('cache_dir', 'data/cache'),
-            fpedia_base_url=data.get('fpedia_base_url', 'https://www.fantacalciopedia.com'),
-            fstats_base_url=data.get('fstats_base_url', 'https://api.app.fantagoat.it/api')
+            fpedia_base_url=self._b64decode(data.get('fpedia_base_url', 'aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20=')),
+            fstats_base_url=self._b64decode(data.get('fstats_base_url', 'aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk='))
         )
     
     def save_config(self, config_file: Optional[str] = None) -> None:
@@ -165,10 +169,12 @@ class ConfigManager:
     
     def get_urls(self) -> Dict[str, str]:
         """Get all URLs based on current configuration"""
+        fpedia_url = self._b64decode(self.config.fpedia_base_url)
+        fstats_url = self._b64decode(self.config.fstats_base_url)
         return {
-            'fpedia_lista': f"{self.config.fpedia_base_url}/lista-calciatori-serie-a/",
-            'fstats_login': f"{self.config.fstats_base_url}/account/login/",
-            'fstats_players': f"{self.config.fstats_base_url}/v1/zona/player/?page_size=1000&page=1&season={self.config.analysis.fstats_anno}%2F{str(self.config.analysis.fstats_anno+1)[-2:]}&ordering="
+            'fpedia_lista': f"{fpedia_url}/lista-calciatori-serie-a/",
+            'fstats_login': f"{fstats_url}/account/login/",
+            'fstats_players': f"{fstats_url}/v1/zona/player/?page_size=1000&page=1&season={self.config.analysis.fstats_anno}%2F{str(self.config.analysis.fstats_anno+1)[-2:]}&ordering="
         }
     
     def update_config(self, section: str, **kwargs) -> None:
