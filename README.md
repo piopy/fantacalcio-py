@@ -16,6 +16,8 @@ Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fanta
 
 *Refactor del codice di cttynul*
 
+## [Cliccare qui per il README della CLI](README_CLI.md)
+
 ## Prerequisiti
 
 Per utilizzare questo progetto, è necessario avere installato **Python 3.10** o superiore e **Poetry** per la gestione delle dipendenze.
@@ -60,6 +62,12 @@ Al termine dell'esecuzione, verranno creati dei file Excel nella directory `data
 - [ ] Messa a punto del calcolo dell'indice di convenienza
 - [ ] Formazione consigliata
 - [ ] Frontend
+
+## Special thanks!
+- [AndreaBozzo](https://github.com/AndreaBozzo/) per aver creato [la CLI figa](https://github.com/AndreaBozzo/fantacalcio-py)
+- [informagico](https://github.com/informagico/) per aver creato [un frontend comprensibile anche a chi non sa cosa sia un excel](https://github.com/informagico/fantavibe) 
+
+
 
 ## Stars
 
