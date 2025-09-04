@@ -15,10 +15,48 @@ tqdm = "^4.67.1"
 requests = "^2.32.4"
 openpyxl = "^3.1.5"
 python-dotenv = "^1.1.1"
+click = "^8.1.7"
+rich = "^13.7.0"
+pyyaml = "^6.0.1"
+typer = {version = "^0.9.0", optional = true}
 
 
 [tool.poetry.group.dev.dependencies]
 black = "^25.1.0"
+pytest = "^8.0.0"
+pytest-cov = "^4.0.0"
+ruff = "^0.1.0"
+mypy = "^1.8.0"
+
+# Scripts configuration for package-mode = false
+# Use poetry run python cli.py instead
+# [tool.poetry.scripts]
+# fantacalcio = "cli:cli"
+
+[tool.poetry.extras]
+typer = ["typer"]
+
+[tool.black]
+line-length = 88
+target-version = ['py310']
+include = '\.pyi?$'
+
+[tool.ruff]
+target-version = "py310"
+line-length = 88
+select = ["E", "F", "W", "I", "N", "UP", "S", "B", "A", "C4", "T20"]
+ignore = ["E501", "S101"]
+
+[tool.mypy]
+python_version = "3.10"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+check_untyped_defs = true
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "--cov=. --cov-report=html --cov-report=term-missing"
 
 [build-system]
 requires = ["poetry-core"]

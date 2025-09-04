@@ -66,16 +66,7 @@ def main():
             "Presenze previste",
             "Gol previsti",
             "Assist previsti",
-            "Ruolo",
-            "Skills",
-            "Buon investimento",
-            "Resistenza infortuni",
-            "Consigliato prossima giornata",
             "Nuovo acquisto",
-            "Infortunato",
-            "Squadra",
-            "Trend",
-            "Presenze campionato corrente",
         ]
         final_columns = [col for col in output_columns if col in df_final.columns]
 
