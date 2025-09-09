@@ -22,9 +22,25 @@ fantacalcio.cmd --help         # Windows
 alias fantacalcio="poetry run python cli.py"
 ```
 
+### 🐞 VSCode Debug
+
+```bash
+# Installa il pack di estensioni Python
+code --install-extension ms-python.python
+
+# Crea l'ambiente all'interno di una cartella .venv nel progetto stesso
+poetry config virtualenvs.in-project true
+
+# Installa i pacchetti poetry
+poetry install
+```
+
+Avvia una delle configurazioni già presenti o creane una nuova.
+
 ### 📋 Comandi Principali
 
 #### 1. **Comando Completo**
+
 ```bash
 # Esegue l'intera pipeline (scraping + analisi)
 poetry run python cli.py run
@@ -34,6 +50,7 @@ poetry run python cli.py run --source fpedia --top 30 --force-scrape
 ```
 
 #### 2. **Scraping Dati**
+
 ```bash
 # Scarica dati da tutte le fonti
 poetry run python cli.py scrape
@@ -47,6 +64,7 @@ poetry run python cli.py scrape --force
 ```
 
 #### 3. **Analisi Dati**
+
 ```bash
 # Analizza tutti i dati disponibili
 poetry run python cli.py analyze
@@ -62,6 +80,7 @@ poetry run python cli.py analyze --output ./custom_output/
 ```
 
 #### 4. **Ispezione Dati**
+
 ```bash
 # Visualizza preview dei dati FPEDIA
 poetry run python cli.py inspect --source fpedia
@@ -74,6 +93,7 @@ poetry run python cli.py inspect --source fstats --team Milan --limit 15
 ```
 
 #### 5. **Status Sistema**
+
 ```bash
 # Controlla stato dei file e configurazione
 poetry run python cli.py status
@@ -82,18 +102,21 @@ poetry run python cli.py status
 ### 🎨 Funzionalità Avanzate
 
 #### **Progress Bars Intelligenti**
+
 - Progress bars animate con Rich
 - Indicatori di performance in tempo reale
 - Stima tempi di completamento
 - Gestione errori visuale
 
 #### **Output Colorato e Tabelle**
+
 - Tabelle formattate con evidenziazione dei migliori giocatori
 - Codici colore per metriche di convenienza
 - Emoji e icone per migliore UX
 - Layout responsive
 
 #### **Configurazione YAML**
+
 ```yaml
 # fantacalcio.yaml
 analysis:
@@ -115,6 +138,7 @@ logging:
 ```
 
 #### **Logging Strutturato**
+
 - Log JSON per analisi avanzate
 - Metriche di performance automatiche
 - Tracking qualità dati
@@ -136,6 +160,7 @@ fantacalcio -v -c ./prod-config.yaml run --source all
 ### 📊 Esempi di Output
 
 #### **Top Players Table**
+
 ```
 🏆 Top 20 Players - FPEDIA                                    
 ┌─────┬────────────────┬──────────────┬──────────┬─────────────┐
@@ -149,6 +174,7 @@ fantacalcio -v -c ./prod-config.yaml run --source all
 ```
 
 #### **Status Dashboard**
+
 ```
 📋 Fantacalcio-PY Status
 ┌─────────────────┬──────────┬─────────────────────────────┐
@@ -176,6 +202,7 @@ fantacalcio -v -c ./prod-config.yaml run --source all
 ### 🔄 Migrazione
 
 Il vecchio `main.py` continua a funzionare, ma la nuova CLI offre:
+
 - Migliore esperienza utente
 - Configurazione flessibile  
 - Migliore debugging

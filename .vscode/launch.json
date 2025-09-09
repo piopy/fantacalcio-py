@@ -1,0 +1,73 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "cli --help",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+				"--help"
+            ]
+        },
+        {
+            "name": "cli run",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+				"run"
+            ]
+        },
+        {
+            "name": "cli run [FPEDIA - T30 - FORCE]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+				"run",
+                "-s",
+                "fpedia",
+                "-t",
+                "30",
+                "-f"
+            ]
+        },
+        {
+            "name": "cli scrape",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "scrape"
+            ]
+        },
+        {
+            "name": "cli scrape [FPEDIA - FORCE]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "scrape",
+				"-s",
+                "fpedia",
+                "-f"
+            ]
+        }
+    ]
+}

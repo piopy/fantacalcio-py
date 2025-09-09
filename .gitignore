@@ -39,6 +39,7 @@ poetry.lock
 
 # VS Code
 .vscode/
+!.vscode/launch.json
 *.code-workspace
 
 # Jupyter Notebook
