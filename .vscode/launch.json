@@ -68,6 +68,20 @@
                 "fpedia",
                 "-f"
             ]
-        }
+        },
+        {
+            "name": "cli scrape [FSTAT]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "scrape",
+                "-s",
+                "fstats"
+            ]
+        },
     ]
 }

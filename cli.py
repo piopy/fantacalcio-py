@@ -90,7 +90,7 @@ def scrape(ctx, source, force):
             task = progress.add_task("Scraping FPEDIA data...", total=None)
             try:
                 if force or not os.path.exists(config.GIOCATORI_CSV):
-                    data_retriever.scrape_fpedia()
+                    data_retriever.scrape_fpedia(force)
                     rprint("✅ [green]FPEDIA data scraped successfully[/green]")
                 else:
                     rprint("ℹ️ [yellow]FPEDIA data already exists (use --force to re-download)[/yellow]")
@@ -102,7 +102,7 @@ def scrape(ctx, source, force):
             task = progress.add_task("Fetching FSTATS data...", total=None)
             try:
                 if force or not os.path.exists(config.PLAYERS_CSV):
-                    data_retriever.fetch_FSTATS_data()
+                    data_retriever.fetch_FSTATS_data(force)
                     rprint("✅ [green]FSTATS data fetched successfully[/green]")
                 else:
                     rprint("ℹ️ [yellow]FSTATS data already exists (use --force to re-download)[/yellow]")
