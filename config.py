@@ -26,7 +26,7 @@ FSTATS_LOGIN_URL = f"{BASEURL_FSTATS}/account/login/"
 FSTATS_PLAYERS_URL = f"{BASEURL_FSTATS}/v1/zona/player/?page_size=1000&page=1&season={str(FSTATS_ANNO)}%2F{str(FSTATS_ANNO+1)[-2:]}&ordering="
 
 # Scraping
-RUOLI = ["Portieri", "Difensori", "Centrocampisti", "Attaccanti"]
+RUOLI = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]
 MAX_WORKERS = 5
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"

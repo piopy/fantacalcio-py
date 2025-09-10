@@ -156,15 +156,19 @@ def get_attributi_giocatore(url: str) -> dict:
     return attributi
 
 
-def scrape_fpedia():
+def scrape_fpedia(force: bool = False):
     """
     Orchestrates the scraping of FPEDIA.
     Fetches all player URLs and then scrapes each player's page for their attributes in parallel.
     Saves the data to a CSV file.
     """
     if os.path.exists(config.GIOCATORI_CSV):
-        logger.debug(f"{config.GIOCATORI_CSV} already exists. Skipping scraping.")
-        return
+        if force:
+            logger.debug(f"Force flag is set. Re-scraping {config.GIOCATORI_CSV}.")
+            os.remove(config.GIOCATORI_CSV)
+        else:
+            logger.debug(f"{config.GIOCATORI_CSV} already exists. Skipping scraping.")
+            return
 
     urls = get_giocatori_urls()
     giocatori = []
@@ -192,14 +196,18 @@ def scrape_fpedia():
     logger.debug("FPEDIA data saved to CSV.")
 
 
-def fetch_FSTATS_data():
+def fetch_FSTATS_data(force: bool = False):
     """
     Logs into FSTATS, fetches player data from the API,
     and saves it to a CSV file.
     """
     if os.path.exists(config.PLAYERS_CSV):
-        logger.debug(f"{config.PLAYERS_CSV} already exists. Skipping download.")
-        return
+        if force:
+            logger.debug(f"Force flag is set. Re-scraping {config.PLAYERS_CSV}.")
+            os.remove(config.PLAYERS_CSV)
+        else:
+            logger.debug(f"{config.PLAYERS_CSV} already exists. Skipping scraping.")
+            return
 
     user = os.getenv("FSTATS_MAIL")
     password = os.getenv("FSTATS_PASSWORD")
