@@ -66,11 +66,14 @@ poetry run python cli.py scrape --force
 #### 3. **Analisi Dati**
 
 ```bash
-# Analizza tutti i dati disponibili
+# Analizza tutti i dati disponibili (genera Excel + JSON)
 poetry run python cli.py analyze
 
 # Analizza solo una fonte
 poetry run python cli.py analyze --source fpedia
+
+# Analiza tutto e crea dataset unificato
+poetry run python cli.py analyze --source all
 
 # Mostra top 20 giocatori nel summary
 poetry run python cli.py analyze --top 20
@@ -78,6 +81,11 @@ poetry run python cli.py analyze --top 20
 # Output personalizzato
 poetry run python cli.py analyze --output ./custom_output/
 ```
+
+**Output generati automaticamente:**
+- `fpedia_analysis.xlsx` + `fpedia_analysis.json`
+- `FSTATS_analysis.xlsx` + `FSTATS_analysis.json`
+- `unified_analysis.xlsx` + `unified_analysis.json` (con `--source all`)
 
 #### 4. **Ispezione Dati**
 
@@ -99,6 +107,46 @@ poetry run python cli.py inspect --source fstats --team Milan --limit 15
 poetry run python cli.py status
 ```
 
+#### 6. **Export JSON Automatico**
+
+🆕 **Novità**: Ogni comando di analisi genera automaticamente file JSON oltre agli Excel!
+
+```bash
+# Tutti questi comandi generano sia .xlsx che .json
+poetry run python cli.py analyze --source fpedia
+poetry run python cli.py analyze --source fstats
+poetry run python cli.py analyze --source all
+poetry run python cli.py run
+```
+
+**Struttura JSON generata:**
+```json
+{
+  "metadata": {
+    "source": "fpedia",
+    "total_players": 523,
+    "generated_at": "2025-01-15T14:30:45.123456",
+    "columns": ["Nome", "Ruolo", "Squadra", "Convenienza Potenziale", ...]
+  },
+  "players": [
+    {
+      "Nome": "LOOKMAN ADEMOLA",
+      "Ruolo": "ATT",
+      "Squadra": "Atalanta",
+      "Convenienza Potenziale": 128.0,
+      ...
+    }
+  ]
+}
+```
+
+**Vantaggi dell'export JSON:**
+- 📊 **Integrazione facile** con altri tools e API
+- 🔍 **Metadata strutturati** per analisi avanzate
+- 🚀 **Performance migliori** per applicazioni web
+- 📱 **Mobile-friendly** per app e dashboard
+- 🔄 **Automatico** - nessun comando aggiuntivo necessario
+
 ### 🎨 Funzionalità Avanzate
 
 #### **Progress Bars Intelligenti**
@@ -115,27 +163,6 @@ poetry run python cli.py status
 - Emoji e icone per migliore UX
 - Layout responsive
 
-#### **Configurazione YAML**
-
-```yaml
-# fantacalcio.yaml
-analysis:
-  anno_corrente: 2025
-  peso_fantamedia: 0.6
-  peso_punteggio: 0.4
-
-scraping:
-  max_workers: 10
-  delay_between_requests: 0.5
-
-output:
-  max_players_display: 100
-  decimal_precision: 3
-
-logging:
-  level: DEBUG
-  file_output: true
-```
 
 #### **Logging Strutturato**
 
@@ -148,13 +175,10 @@ logging:
 
 ```bash
 # Verbose mode per debugging
-fantacalcio --verbose run
-
-# Config file personalizzato
-fantacalcio --config-file ./my-config.yaml analyze
+poetry run python cli.py --verbose run
 
 # Combinando opzioni
-fantacalcio -v -c ./prod-config.yaml run --source all
+poetry run python cli.py -v run --source all --top 20
 ```
 
 ### 📊 Esempi di Output
@@ -193,7 +217,9 @@ fantacalcio -v -c ./prod-config.yaml run --source all
 |---------|-----------|-----------|
 | **Interface** | Script singolo | Comandi modulari |
 | **Progress** | tqdm basic | Rich animated |
-| **Output** | Print semplice | Tabelle colorate |
+| **Output** | Solo Excel | Excel + JSON automatico |
+| **Export Formats** | .xlsx | .xlsx + .json con metadata |
+| **Unified Analysis** | Solo main.py | Anche in CLI |
 | **Config** | Hard-coded | YAML flessibile |
 | **Logging** | Loguru basic | Strutturato JSON |
 | **Error Handling** | Minimo | Robusto con retry |
@@ -217,3 +243,6 @@ Per utilizzare la nuova CLI, installa le dipendenze e usa `fantacalcio` invece d
 3. **Personalizza config YAML** per le tue esigenze
 4. **Usa filters con `inspect`** per esplorare i dati
 5. **Combina `--force-scrape`** con `--source` per aggiornamenti mirati
+6. **🆕 File JSON automatici** - ideali per integrazioni con dashboard e API
+7. **🆕 Dataset unificato** - usa `--source all` per combinare FPEDIA + FSTATS
+8. **🆕 Metadata JSON** - timestamp e info utili per tracking cronologico

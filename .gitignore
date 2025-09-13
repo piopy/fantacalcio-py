@@ -103,8 +103,3 @@ Thumbs.db
 *~
 *.txt
 
-# Configuration files (keep template)
-fantacalcio.yaml
-config.yaml
-!fantacalcio.yaml.template
-!config.yaml.template
