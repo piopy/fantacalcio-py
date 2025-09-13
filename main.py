@@ -11,6 +11,31 @@ import fuzzy_matcher
 import config
 
 
+def save_analysis_results(df, base_name, source_name):
+    """Save analysis results in both Excel and JSON formats"""
+
+    # Excel output
+    excel_path = os.path.join(config.OUTPUT_DIR, f"{base_name}.xlsx")
+    df.to_excel(excel_path, index=False)
+
+    # JSON output
+    json_path = os.path.join(config.OUTPUT_DIR, f"{base_name}.json")
+    data = {
+        "metadata": {
+            "source": source_name,
+            "total_players": len(df),
+            "generated_at": pd.Timestamp.now().isoformat(),
+            "columns": list(df.columns)
+        },
+        "players": df.fillna("").to_dict("records")
+    }
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    return excel_path, json_path
+
+
 def merge_datasets_with_mapping(
     df_fpedia_final, df_fstats_final, mapping_file=fuzzy_matcher.OUTPUT_FILE
 ):
@@ -168,12 +193,15 @@ def main():
         ]
         final_columns = [col for col in output_columns if col in df_final.columns]
 
-        output_path = os.path.join(config.OUTPUT_DIR, "fpedia_analysis.xlsx")
-        df_final[final_columns].to_excel(output_path, index=False)
+        # Save both Excel and JSON
+        excel_path, json_path = save_analysis_results(
+            df_final[final_columns], "fpedia_analysis", "fpedia"
+        )
 
         df_fpedia_final = df_final.copy()  # Salva per il merge
 
-        logger.info(f"FPEDIA analysis complete. Results saved to {output_path}")
+        logger.info(f"FPEDIA analysis complete. Results saved to {excel_path}")
+        logger.info(f"FPEDIA JSON export saved to {json_path}")
     else:
         logger.warning("FPEDIA DataFrame is empty. Pipeline skipped.")
 
@@ -268,12 +296,15 @@ def main():
         ]
         final_columns = [col for col in output_columns if col in df_final.columns]
 
-        output_path = os.path.join(config.OUTPUT_DIR, "FSTATS_analysis.xlsx")
-        df_final[final_columns].to_excel(output_path, index=False)
+        # Save both Excel and JSON
+        excel_path, json_path = save_analysis_results(
+            df_final[final_columns], "FSTATS_analysis", "fstats"
+        )
 
         df_fstats_final = df_final.copy()  # Salva per il merge
 
-        logger.info(f"FSTATS analysis complete. Results saved to {output_path}")
+        logger.info(f"FSTATS analysis complete. Results saved to {excel_path}")
+        logger.info(f"FSTATS JSON export saved to {json_path}")
     else:
         logger.warning("FSTATS DataFrame is empty. Pipeline skipped.")
 
@@ -283,13 +314,12 @@ def main():
         df_unified = merge_datasets_with_mapping(df_fpedia_final, df_fstats_final)
 
         if not df_unified.empty:
-            unified_output_path = os.path.join(
-                config.OUTPUT_DIR, "unified_analysis.xlsx"
+            # Save both Excel and JSON
+            excel_path, json_path = save_analysis_results(
+                df_unified, "unified_analysis", "unified"
             )
-            df_unified.to_excel(unified_output_path, index=False)
-            logger.info(
-                f"Unified analysis complete. Results saved to {unified_output_path}"
-            )
+            logger.info(f"Unified analysis complete. Results saved to {excel_path}")
+            logger.info(f"Unified JSON export saved to {json_path}")
         else:
             logger.warning("Unified analysis resulted in empty DataFrame.")
 
