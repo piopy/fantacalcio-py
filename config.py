@@ -31,6 +31,7 @@ MAX_WORKERS = 5
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 }
+FORCE_SCRAPING_MAIN = True # Forza lo scraping anche se i file esistono
 
 # Costanti per il calcolo della convenienza
 PESO_FANTAMEDIA = 0.6

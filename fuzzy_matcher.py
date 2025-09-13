@@ -5,6 +5,8 @@ from typing import Dict, List, Tuple, Optional
 from fuzzywuzzy import fuzz, process
 from unidecode import unidecode
 
+OUTPUT_FILE = "player_mapping.json"
+
 
 def normalize_name(name: str) -> str:
     if pd.isna(name):
@@ -251,7 +253,7 @@ def save_mapping_to_json(
     unmapped_2: List[str],
     probably_mapped_ns: Dict[str, str] = None,
     probably_mapped_n: Dict[str, str] = None,
-    output_file: str = "player_mapping.json",
+    output_file: str = OUTPUT_FILE,
 ):
     data = {
         "mapping": mapping,
