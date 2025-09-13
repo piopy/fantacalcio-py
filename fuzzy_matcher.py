@@ -276,14 +276,17 @@ def save_mapping_to_json(
         json.dump(data, f, ensure_ascii=False, indent=2)
 
 
-def main():
+def start_matching(
+    df_giocatori_path: str = "data/_giocatori.csv",
+    df_players_path: str = "data/_players.csv",
+):
     mapping, unmapped_1, unmapped_2 = create_fuzzy_mapping(
         min_similarity=60.0, use_team_filter=True
     )
 
     # Carica i dati per il partial matching
     df_giocatori, df_players = load_and_preprocess_data(
-        "data/_giocatori.csv", "data/_players.csv"
+        df_giocatori_path, df_players_path
     )
 
     # Trova match parziali (separati per confidenza)
@@ -320,4 +323,4 @@ def main():
 
 
 if __name__ == "__main__":
-    main()
+    start_matching()
