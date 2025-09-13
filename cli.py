@@ -348,9 +348,17 @@ def analyze(ctx, source, output, top):
             df_unified = _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final)
 
             if not df_unified.empty:
+                # Sort unified dataset by fpedia convenience (prioritize fpedia scoring)
+                sort_cols = ["fpedia_Convenienza Potenziale", "fstats_Convenienza Potenziale"]
+                available_sort_cols = [col for col in sort_cols if col in df_unified.columns]
+                if available_sort_cols:
+                    df_unified_sorted = df_unified.sort_values(by=available_sort_cols[0], ascending=False)
+                else:
+                    df_unified_sorted = df_unified
+
                 # Save unified results
                 excel_path, json_path = _save_analysis_results(
-                    df_unified, "unified_analysis", "unified"
+                    df_unified_sorted, "unified_analysis", "unified"
                 )
 
                 progress.update(task, completed=True)
@@ -358,7 +366,7 @@ def analyze(ctx, source, output, top):
                 rprint(f"📄 [blue]JSON export saved to {json_path}[/blue]")
 
                 # Show top unified players
-                _show_top_players(df_unified, "UNIFIED", top)
+                _show_top_players(df_unified_sorted, "UNIFIED", top)
             else:
                 progress.update(task, completed=True)
                 rprint("⚠️ [yellow]Unified analysis resulted in empty dataset[/yellow]")
@@ -621,8 +629,8 @@ def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=
     priority_cols = [
         "Nome_fpedia",
         "mapped_name",
-        "Ruolo",
-        "Squadra",
+        "Ruolo_fpedia",
+        "Squadra_fpedia",
         "fpedia_Convenienza Potenziale",
         "fstats_Convenienza Potenziale",
         "fpedia_Convenienza",
@@ -656,12 +664,23 @@ def _show_top_players(df, source_name, top_n):
 
     df_top = df.head(top_n)
     for idx, (_, row) in enumerate(df_top.iterrows(), 1):
-        convenience = row.get("Convenienza Potenziale", row.get("Convenienza", 0))
+        # Handle different column names for unified vs single source datasets
+        if source_name == "UNIFIED":
+            convenience = row.get("fpedia_Convenienza Potenziale", row.get("fstats_Convenienza Potenziale", 0))
+            name = str(row.get("Nome_fpedia", "N/A"))
+            role = str(row.get("Ruolo_fpedia", "N/A"))
+            team = str(row.get("Squadra_fpedia", "N/A"))
+        else:
+            convenience = row.get("Convenienza Potenziale", row.get("Convenienza", 0))
+            name = str(row.get("Nome", "N/A"))
+            role = str(row.get("Ruolo", "N/A"))
+            team = str(row.get("Squadra", "N/A"))
+
         table.add_row(
             str(idx),
-            str(row.get("Nome", "N/A")),
-            str(row.get("Ruolo", "N/A")),
-            str(row.get("Squadra", "N/A")),
+            name,
+            role,
+            team,
             f"{convenience:.2f}" if pd.notna(convenience) else "N/A",
         )
 
