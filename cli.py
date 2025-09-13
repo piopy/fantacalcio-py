@@ -29,7 +29,9 @@ from rich.live import Live
 import data_retriever
 import data_processor
 import convenienza_calculator
+import fuzzy_matcher
 import config
+import json
 
 
 console = Console()
@@ -163,6 +165,10 @@ def analyze(ctx, source, output, top):
         df_fpedia, df_fstats = data_processor.load_dataframes()
         progress.update(task, completed=True)
 
+        # Store final dataframes for unified analysis
+        df_fpedia_final = None
+        df_fstats_final = None
+
         # Process FPEDIA
         if source in ["fpedia", "all"] and not df_fpedia.empty:
             task = progress.add_task("Processing FPEDIA data...", total=None)
@@ -208,10 +214,18 @@ def analyze(ctx, source, output, top):
             final_columns = [
                 col for col in output_columns if col in df_final_sorted.columns
             ]
-            df_final_sorted[final_columns].to_excel(output_path, index=False)
+
+            # Save both Excel and JSON
+            excel_path, json_path = _save_analysis_results(
+                df_final_sorted[final_columns], "fpedia_analysis", "fpedia"
+            )
 
             progress.update(task, completed=True)
-            rprint(f"✅ [green]FPEDIA analysis saved to {output_path}[/green]")
+            rprint(f"✅ [green]FPEDIA analysis saved to {excel_path}[/green]")
+            rprint(f"📄 [blue]JSON export saved to {json_path}[/blue]")
+
+            # Store for unified analysis
+            df_fpedia_final = df_final.copy()
 
             # Show top players
             _show_top_players(df_final_sorted, "FPEDIA", top)
@@ -309,13 +323,45 @@ def analyze(ctx, source, output, top):
             final_columns = [
                 col for col in output_columns if col in df_final_sorted.columns
             ]
-            df_final_sorted[final_columns].to_excel(output_path, index=False)
+
+            # Save both Excel and JSON
+            excel_path, json_path = _save_analysis_results(
+                df_final_sorted[final_columns], "FSTATS_analysis", "fstats"
+            )
 
             progress.update(task, completed=True)
-            rprint(f"✅ [green]FSTATS analysis saved to {output_path}[/green]")
+            rprint(f"✅ [green]FSTATS analysis saved to {excel_path}[/green]")
+            rprint(f"📄 [blue]JSON export saved to {json_path}[/blue]")
+
+            # Store for unified analysis
+            df_fstats_final = df_final.copy()
 
             # Show top players
             _show_top_players(df_final_sorted, "FSTATS", top)
+
+        # Create unified analysis if both datasets were processed
+        if (source == "all" and
+            df_fpedia_final is not None and df_fstats_final is not None):
+            task = progress.add_task("Creating unified analysis...", total=None)
+
+            # Create unified dataset using already processed data
+            df_unified = _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final)
+
+            if not df_unified.empty:
+                # Save unified results
+                excel_path, json_path = _save_analysis_results(
+                    df_unified, "unified_analysis", "unified"
+                )
+
+                progress.update(task, completed=True)
+                rprint(f"✅ [green]Unified analysis saved to {excel_path}[/green]")
+                rprint(f"📄 [blue]JSON export saved to {json_path}[/blue]")
+
+                # Show top unified players
+                _show_top_players(df_unified, "UNIFIED", top)
+            else:
+                progress.update(task, completed=True)
+                rprint("⚠️ [yellow]Unified analysis resulted in empty dataset[/yellow]")
 
 
 @cli.command()
@@ -486,6 +532,112 @@ def status():
         rprint(
             "Create a .env file with your FSTATS credentials to enable FSTATS data fetching."
         )
+
+
+
+def _save_analysis_results(df, base_name, source_name):
+    """Helper function to save analysis results in both Excel and JSON formats"""
+    import pandas as pd
+
+    # Excel output
+    excel_path = os.path.join(config.OUTPUT_DIR, f"{base_name}.xlsx")
+    df.to_excel(excel_path, index=False)
+
+    # JSON output
+    json_path = os.path.join(config.OUTPUT_DIR, f"{base_name}.json")
+    data = {
+        "metadata": {
+            "source": source_name,
+            "total_players": len(df),
+            "generated_at": pd.Timestamp.now().isoformat(),
+            "columns": list(df.columns)
+        },
+        "players": df.fillna("").to_dict("records")
+    }
+
+    with open(json_path, 'w', encoding='utf-8') as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    return excel_path, json_path
+
+
+def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=fuzzy_matcher.OUTPUT_FILE):
+    """Merge datasets using fuzzy mapping"""
+    import pandas as pd
+
+    # Load mapping
+    if not os.path.exists(mapping_file):
+        rprint(f"⚠️ [yellow]Mapping file {mapping_file} not found. Skipping unified analysis.[/yellow]")
+        return pd.DataFrame()
+
+    with open(mapping_file, "r", encoding="utf-8") as f:
+        mapping_data = json.load(f)
+
+    mapping = mapping_data.get("mapping", {})
+    probably_mapped_ns = mapping_data.get("probably_mapped_ns", {})
+    all_mapping = {**mapping, **probably_mapped_ns}
+
+    if not all_mapping:
+        rprint("⚠️ [yellow]No player mappings found. Skipping unified analysis.[/yellow]")
+        return pd.DataFrame()
+
+    # Prepare datasets for merging
+    df_fpedia_merge = df_fpedia_final.copy()
+    df_fstats_merge = df_fstats_final.copy()
+
+    # Rename columns to avoid conflicts
+    fpedia_cols = {
+        col: f"fpedia_{col}"
+        for col in df_fpedia_merge.columns
+        if col not in ["Nome", "Ruolo", "Squadra"]
+    }
+    fstats_cols = {
+        col: f"fstats_{col}"
+        for col in df_fstats_merge.columns
+        if col not in ["Nome", "Ruolo", "Squadra"]
+    }
+
+    df_fpedia_merge = df_fpedia_merge.rename(columns=fpedia_cols)
+    df_fstats_merge = df_fstats_merge.rename(columns=fstats_cols)
+
+    # Create mapping keys
+    df_fpedia_merge["mapped_name"] = df_fpedia_merge["Nome"].map(all_mapping)
+    df_fstats_merge["mapped_name"] = (
+        df_fstats_merge["fstats_firstname"].fillna("")
+        + " "
+        + df_fstats_merge["fstats_lastname"].fillna("")
+    ).str.strip()
+
+    # Merge
+    df_merged = pd.merge(
+        df_fpedia_merge,
+        df_fstats_merge,
+        on="mapped_name",
+        how="inner",
+        suffixes=("_fpedia", "_fstats"),
+    )
+
+    # Reorder columns
+    priority_cols = [
+        "Nome_fpedia",
+        "mapped_name",
+        "Ruolo",
+        "Squadra",
+        "fpedia_Convenienza Potenziale",
+        "fstats_Convenienza Potenziale",
+        "fpedia_Convenienza",
+        "fstats_Convenienza",
+        "fpedia_Punteggio",
+        "fstats_fantacalcioFantaindex",
+        "fstats_fanta_avg",
+        "fstats_presences",
+    ]
+    remaining_cols = [col for col in df_merged.columns if col not in priority_cols]
+    final_col_order = [
+        col for col in priority_cols if col in df_merged.columns
+    ] + remaining_cols
+
+    return df_merged[final_col_order]
 
 
 def _show_top_players(df, source_name, top_n):
