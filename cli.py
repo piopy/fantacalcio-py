@@ -32,9 +32,39 @@ import convenienza_calculator
 import fuzzy_matcher
 import config
 import json
+from datetime import datetime
 
 
 console = Console()
+
+
+def _get_file_age_info(file_path):
+    """Get human-readable file age information"""
+    if not os.path.exists(file_path):
+        return None
+
+    file_time = datetime.fromtimestamp(os.path.getmtime(file_path))
+    now = datetime.now()
+    age = now - file_time
+
+    days = age.days
+    hours = age.seconds // 3600
+
+    if days > 0:
+        if days == 1:
+            age_str = "1 day"
+        else:
+            age_str = f"{days} days"
+    elif hours > 0:
+        if hours == 1:
+            age_str = "1 hour"
+        else:
+            age_str = f"{hours} hours"
+    else:
+        age_str = "less than 1 hour"
+
+    date_str = file_time.strftime("%Y-%m-%d %H:%M")
+    return {"age": age_str, "date": date_str, "days": days}
 
 
 @click.group()
@@ -104,9 +134,16 @@ def scrape(ctx, source, force):
                     data_retriever.scrape_fpedia(force)
                     rprint("✅ [green]FPEDIA data scraped successfully[/green]")
                 else:
-                    rprint(
-                        "ℹ️ [yellow]FPEDIA data already exists (use --force to re-download)[/yellow]"
-                    )
+                    # Show cache age info
+                    age_info = _get_file_age_info(config.GIOCATORI_CSV)
+                    if age_info:
+                        rprint(f"📁 [yellow]Using cached FPEDIA data from {age_info['date']} ({age_info['age']} old)[/yellow]")
+                        if age_info['days'] >= 7:
+                            rprint("⚠️ [orange]Data is over a week old - consider using --force for fresh data[/orange]")
+                        elif age_info['days'] >= 1:
+                            rprint("💡 [blue]Tip: Use --force to download latest data[/blue]")
+                    else:
+                        rprint("ℹ️ [yellow]Using cached FPEDIA data (use --force to re-download)[/yellow]")
                 progress.update(task, completed=True)
             except Exception as e:
                 rprint(f"❌ [red]Error scraping FPEDIA: {e}[/red]")
@@ -118,9 +155,16 @@ def scrape(ctx, source, force):
                     data_retriever.fetch_FSTATS_data(force)
                     rprint("✅ [green]FSTATS data fetched successfully[/green]")
                 else:
-                    rprint(
-                        "ℹ️ [yellow]FSTATS data already exists (use --force to re-download)[/yellow]"
-                    )
+                    # Show cache age info
+                    age_info = _get_file_age_info(config.PLAYERS_CSV)
+                    if age_info:
+                        rprint(f"📁 [yellow]Using cached FSTATS data from {age_info['date']} ({age_info['age']} old)[/yellow]")
+                        if age_info['days'] >= 7:
+                            rprint("⚠️ [orange]Data is over a week old - consider using --force for fresh data[/orange]")
+                        elif age_info['days'] >= 1:
+                            rprint("💡 [blue]Tip: Use --force to download latest data[/blue]")
+                    else:
+                        rprint("ℹ️ [yellow]Using cached FSTATS data (use --force to re-download)[/yellow]")
                 progress.update(task, completed=True)
             except Exception as e:
                 rprint(f"❌ [red]Error fetching FSTATS: {e}[/red]")
