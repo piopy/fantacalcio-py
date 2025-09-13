@@ -1,6 +1,7 @@
 """
 Configuration management with YAML support for Fantacalcio-PY
 """
+
 import os
 import yaml
 import base64
@@ -13,6 +14,7 @@ from loguru import logger
 @dataclass
 class ScrapingConfig:
     """Configuration for data scraping"""
+
     max_workers: int = 5
     request_timeout: int = 30
     retry_attempts: int = 3
@@ -23,6 +25,7 @@ class ScrapingConfig:
 @dataclass
 class AnalysisConfig:
     """Configuration for data analysis"""
+
     peso_fantamedia: float = 0.6
     peso_punteggio: float = 0.4
     prezzo_minimo: int = 1
@@ -35,6 +38,7 @@ class AnalysisConfig:
 @dataclass
 class OutputConfig:
     """Configuration for output formatting"""
+
     excel_format: str = "xlsx"
     include_charts: bool = False
     max_players_display: int = 50
@@ -44,8 +48,11 @@ class OutputConfig:
 @dataclass
 class LoggingConfig:
     """Configuration for logging"""
+
     level: str = "INFO"
-    format: str = "<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | {message}"
+    format: str = (
+        "<green>{time:HH:mm:ss}</green> | <level>{level: <8}</level> | {message}"
+    )
     file_output: bool = False
     log_file: str = "logs/fantacalcio.log"
 
@@ -53,16 +60,17 @@ class LoggingConfig:
 @dataclass
 class AppConfig:
     """Main application configuration"""
+
     scraping: ScrapingConfig
-    analysis: AnalysisConfig  
+    analysis: AnalysisConfig
     output: OutputConfig
     logging: LoggingConfig
-    
+
     # Paths
     data_dir: str = "data"
-    output_dir: str = "data/output" 
+    output_dir: str = "data/output"
     cache_dir: str = "data/cache"
-    
+
     # API URLs (base64 encoded values)
     fpedia_base_url: str = "aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20="
     fstats_base_url: str = "aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk="
@@ -70,84 +78,94 @@ class AppConfig:
 
 class ConfigManager:
     """Manages application configuration with YAML support"""
-    
+
     DEFAULT_CONFIG_FILE = "fantacalcio.yaml"
-    
+
     def __init__(self, config_file: Optional[str] = None):
         self.config_file = config_file or self.DEFAULT_CONFIG_FILE
         self.config = self._load_config()
-    
+
     def _load_config(self) -> AppConfig:
         """Load configuration from YAML file or create default"""
         config_path = Path(self.config_file)
-        
+
         if config_path.exists():
             try:
-                with open(config_path, 'r', encoding='utf-8') as f:
+                with open(config_path, "r", encoding="utf-8") as f:
                     data = yaml.safe_load(f) or {}
                 logger.debug(f"Loaded configuration from {config_path}")
                 return self._dict_to_config(data)
             except Exception as e:
                 logger.warning(f"Error loading config from {config_path}: {e}")
                 logger.info("Using default configuration")
-        
+
         # Return default configuration
         return self._get_default_config()
-    
+
     def _b64decode(self, stringa):
         return base64.b64decode(stringa).decode("utf-8")
-    
+
     def _get_default_config(self) -> AppConfig:
         """Get default configuration"""
         return AppConfig(
             scraping=ScrapingConfig(),
-            analysis=AnalysisConfig(), 
+            analysis=AnalysisConfig(),
             output=OutputConfig(),
-            logging=LoggingConfig()
+            logging=LoggingConfig(),
         )
-    
+
     def _dict_to_config(self, data: Dict[str, Any]) -> AppConfig:
         """Convert dictionary to AppConfig object"""
         return AppConfig(
-            scraping=ScrapingConfig(**data.get('scraping', {})),
-            analysis=AnalysisConfig(**data.get('analysis', {})),
-            output=OutputConfig(**data.get('output', {})), 
-            logging=LoggingConfig(**data.get('logging', {})),
-            data_dir=data.get('data_dir', 'data'),
-            output_dir=data.get('output_dir', 'data/output'),
-            cache_dir=data.get('cache_dir', 'data/cache'),
-            fpedia_base_url=self._b64decode(data.get('fpedia_base_url', 'aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20=')),
-            fstats_base_url=self._b64decode(data.get('fstats_base_url', 'aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk='))
+            scraping=ScrapingConfig(**data.get("scraping", {})),
+            analysis=AnalysisConfig(**data.get("analysis", {})),
+            output=OutputConfig(**data.get("output", {})),
+            logging=LoggingConfig(**data.get("logging", {})),
+            data_dir=data.get("data_dir", "data"),
+            output_dir=data.get("output_dir", "data/output"),
+            cache_dir=data.get("cache_dir", "data/cache"),
+            fpedia_base_url=self._b64decode(
+                data.get(
+                    "fpedia_base_url", "aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20="
+                )
+            ),
+            fstats_base_url=self._b64decode(
+                data.get(
+                    "fstats_base_url", "aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk="
+                )
+            ),
         )
-    
+
     def save_config(self, config_file: Optional[str] = None) -> None:
         """Save current configuration to YAML file"""
         file_path = config_file or self.config_file
-        
+
         # Convert config to dict
         config_dict = {
-            'scraping': asdict(self.config.scraping),
-            'analysis': asdict(self.config.analysis),
-            'output': asdict(self.config.output),
-            'logging': asdict(self.config.logging),
-            'data_dir': self.config.data_dir,
-            'output_dir': self.config.output_dir,
-            'cache_dir': self.config.cache_dir,
-            'fpedia_base_url': self.config.fpedia_base_url,
-            'fstats_base_url': self.config.fstats_base_url
+            "scraping": asdict(self.config.scraping),
+            "analysis": asdict(self.config.analysis),
+            "output": asdict(self.config.output),
+            "logging": asdict(self.config.logging),
+            "data_dir": self.config.data_dir,
+            "output_dir": self.config.output_dir,
+            "cache_dir": self.config.cache_dir,
+            "fpedia_base_url": self.config.fpedia_base_url,
+            "fstats_base_url": self.config.fstats_base_url,
         }
-        
+
         try:
             # Create directory if it doesn't exist
             Path(file_path).parent.mkdir(parents=True, exist_ok=True)
-            
-            with open(file_path, 'w', encoding='utf-8') as f:
-                yaml.dump(config_dict, f, default_flow_style=False, indent=2, sort_keys=True)
-            
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                yaml.dump(
+                    config_dict, f, default_flow_style=False, indent=2, sort_keys=True
+                )
+
             logger.info(f"Configuration saved to {file_path}")
         except Exception as e:
             logger.error(f"Error saving configuration: {e}")
-    
+
     def create_default_config_file(self) -> None:
         """Create a default configuration file"""
         if not Path(self.config_file).exists():
@@ -155,28 +173,32 @@ class ConfigManager:
             logger.info(f"Created default configuration file: {self.config_file}")
         else:
             logger.info(f"Configuration file already exists: {self.config_file}")
-    
+
     def get_file_paths(self) -> Dict[str, str]:
         """Get all file paths based on current configuration"""
         return {
-            'giocatori_csv': os.path.join(self.config.data_dir, '_giocatori.csv'),
-            'players_csv': os.path.join(self.config.data_dir, '_players.csv'),
-            'giocatori_urls': os.path.join(self.config.data_dir, 'giocatori_urls.txt'),
-            'fpedia_output': os.path.join(self.config.output_dir, 'fpedia_analysis.xlsx'),
-            'fstats_output': os.path.join(self.config.output_dir, 'FSTATS_analysis.xlsx'),
-            'cache_dir': self.config.cache_dir
+            "giocatori_csv": os.path.join(self.config.data_dir, "_giocatori.csv"),
+            "players_csv": os.path.join(self.config.data_dir, "_players.csv"),
+            "giocatori_urls": os.path.join(self.config.data_dir, "giocatori_urls.txt"),
+            "fpedia_output": os.path.join(
+                self.config.output_dir, "fpedia_analysis.xlsx"
+            ),
+            "fstats_output": os.path.join(
+                self.config.output_dir, "FSTATS_analysis.xlsx"
+            ),
+            "cache_dir": self.config.cache_dir,
         }
-    
+
     def get_urls(self) -> Dict[str, str]:
         """Get all URLs based on current configuration"""
         fpedia_url = self._b64decode(self.config.fpedia_base_url)
         fstats_url = self._b64decode(self.config.fstats_base_url)
         return {
-            'fpedia_lista': f"{fpedia_url}/lista-calciatori-serie-a/",
-            'fstats_login': f"{fstats_url}/account/login/",
-            'fstats_players': f"{fstats_url}/v1/zona/player/?page_size=1000&page=1&season={self.config.analysis.fstats_anno}%2F{str(self.config.analysis.fstats_anno+1)[-2:]}&ordering="
+            "fpedia_lista": f"{fpedia_url}/lista-calciatori-serie-a/",
+            "fstats_login": f"{fstats_url}/account/login/",
+            "fstats_players": f"{fstats_url}/v1/zona/player/?page_size=1000&page=1&season={self.config.analysis.fstats_anno}%2F{str(self.config.analysis.fstats_anno+1)[-2:]}&ordering=",
         }
-    
+
     def update_config(self, section: str, **kwargs) -> None:
         """Update specific configuration section"""
         if hasattr(self.config, section):
