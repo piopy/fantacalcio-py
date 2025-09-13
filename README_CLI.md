@@ -163,27 +163,6 @@ poetry run python cli.py run
 - Emoji e icone per migliore UX
 - Layout responsive
 
-#### **Configurazione YAML**
-
-```yaml
-# fantacalcio.yaml
-analysis:
-  anno_corrente: 2025
-  peso_fantamedia: 0.6
-  peso_punteggio: 0.4
-
-scraping:
-  max_workers: 10
-  delay_between_requests: 0.5
-
-output:
-  max_players_display: 100
-  decimal_precision: 3
-
-logging:
-  level: DEBUG
-  file_output: true
-```
 
 #### **Logging Strutturato**
 
@@ -196,13 +175,10 @@ logging:
 
 ```bash
 # Verbose mode per debugging
-fantacalcio --verbose run
-
-# Config file personalizzato
-fantacalcio --config-file ./my-config.yaml analyze
+poetry run python cli.py --verbose run
 
 # Combinando opzioni
-fantacalcio -v -c ./prod-config.yaml run --source all
+poetry run python cli.py -v run --source all --top 20
 ```
 
 ### 📊 Esempi di Output

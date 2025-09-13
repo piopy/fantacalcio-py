@@ -39,11 +39,8 @@ console = Console()
 
 @click.group()
 @click.option("--verbose", "-v", is_flag=True, help="Enable verbose logging")
-@click.option(
-    "--config-file", "-c", type=click.Path(exists=True), help="Custom config file"
-)
 @click.pass_context
-def cli(ctx, verbose, config_file):
+def cli(ctx, verbose):
     """
     🏆 Fantacalcio-PY - Advanced fantasy football analysis tool
 
@@ -52,7 +49,6 @@ def cli(ctx, verbose, config_file):
     """
     ctx.ensure_object(dict)
     ctx.obj["verbose"] = verbose
-    ctx.obj["config_file"] = config_file
 
     # Configure logging
     logger.remove()  # Remove default handler
