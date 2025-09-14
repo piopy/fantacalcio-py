@@ -15,10 +15,10 @@ import config
 load_dotenv()
 
 
-def get_giocatori_urls() -> list:
+def get_giocatori_urls(force=True) -> list:
     """Scrapes FPEDIA to get all player URLs."""
     giocatori_urls = []
-    if not os.path.exists(config.GIOCATORI_URLS_FILE):
+    if not os.path.exists(config.GIOCATORI_URLS_FILE) or force:
         logger.debug("Scraping player URLs from FPEDIA...")
         for ruolo in tqdm(config.RUOLI):
             url = config.FPEDIA_URL + ruolo.lower() + "/"
@@ -170,7 +170,7 @@ def scrape_fpedia(force: bool = False):
             logger.debug(f"{config.GIOCATORI_CSV} already exists. Skipping scraping.")
             return
 
-    urls = get_giocatori_urls()
+    urls = get_giocatori_urls(config.FORCE_SCRAPE_URLS)
     giocatori = []
     logger.debug("Scraping individual player data from website...")
 
