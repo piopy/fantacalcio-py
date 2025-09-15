@@ -83,5 +83,59 @@
                 "fstats"
             ]
         },
+        {
+            "name": "cli analyze",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "analyze"
+            ]
+        },
+        {
+            "name": "cli analyze [JSON]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "analyze",
+                "-f",
+                "json"
+            ]
+        },
+        {
+            "name": "cli analyze [FPEDIA]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "analyze",
+                "-s",
+                "fpedia"
+            ]
+        },
+        {
+            "name": "cli analyze [FSTAT]",
+            "type": "debugpy",
+            "request": "launch",
+			"python": "${workspaceFolder}/.venv/Scripts/python",
+            "cwd": "${workspaceFolder}",
+            "module": "cli",
+            "justMyCode": false,
+            "args": [
+                "analyze",
+                "-s",
+                "fstats"
+            ]
+        }
     ]
 }
