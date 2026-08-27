@@ -34,6 +34,9 @@ def get_giocatori_urls(force=True) -> list:
                 logger.error(f"Failed to retrieve URLs for role '{ruolo}': {e}")
                 continue
 
+        # Roles overlap on FPEDIA (e.g. Trequartisti are also listed under Centrocampisti)
+        giocatori_urls = list(dict.fromkeys(giocatori_urls))
+
         if not giocatori_urls:
             logger.warning(
                 "No player URLs were scraped from FPEDIA. "
