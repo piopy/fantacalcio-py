@@ -178,7 +178,7 @@ def scrape(ctx, source, force):
     default="all",
     help="Data source to analyze",
 )
-@click.option("--output", "-o", type=click.Path(), help="Custom output directory")
+@click.option("--output", "-o", type=click.Path(), default=None, help="Custom output directory")
 @click.option("--top", "-t", type=int, default=50, help="Show top N players in summary")
 @click.pass_context
 def analyze(ctx, source, output, top):
