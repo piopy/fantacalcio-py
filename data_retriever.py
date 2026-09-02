@@ -57,7 +57,7 @@ def get_giocatori_urls(force=True) -> list:
 def get_attributi_giocatore(url: str) -> dict:
     """Scrapes a single player's page on FPEDIA for their attributes."""
     logger.debug(f"Scraping attributes for player from URL: {url}")
-    time.sleep(randint(1000, 8000) / 1000)
+    time.sleep(randint(100, 600) / 1000)
     attributi = dict()
     html = requests.get(url.strip())
     soup = BeautifulSoup(html.content, "html.parser")

@@ -17,26 +17,21 @@ CONVENIENZA_CSV = os.path.join(OUTPUT_DIR, "convenienza.csv")
 OUTPUT_EXCEL = os.path.join(OUTPUT_DIR, "fantacalcio_analysis.xlsx")
 
 # URLS
-ANNO_CORRENTE = 2025
-FSTATS_ANNO = 2024
+ANNO_CORRENTE = 2026
+FSTATS_ANNO = 2025
 BASEURL_FPEDIA = decode("aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20=")
-BASEURL_FSTATS = decode("aHR0cHM6Ly9hcGkuYXBwLmZhbnRhZ29hdC5pdC9hcGk=")
+BASEURL_FSTATS = decode("aHR0cHM6Ly9oM3B4aXJxc2dlLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3Byb2QvYXV0aC9lbWFpbC9sb2dpbg==")
 FPEDIA_URL = f"{BASEURL_FPEDIA}/lista-calciatori-serie-a/"
 FSTATS_LOGIN_URL = f"{BASEURL_FSTATS}/account/login/"
 FSTATS_PLAYERS_URL = f"{BASEURL_FSTATS}/v1/zona/player/?page_size=1000&page=1&season={str(FSTATS_ANNO)}%2F{str(FSTATS_ANNO+1)[-2:]}&ordering="
 
 # Scraping
 RUOLI = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]
-MAX_WORKERS = 5
+MAX_WORKERS = 10
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 }
 FORCE_SCRAPING_MAIN = True # Forza lo scraping anche se i file esistono
 FORCE_SCRAPE_URLS = True # Forza il re-scraping degli URL dei giocatori
 
-# Costanti per il calcolo della convenienza
-PESO_FANTAMEDIA = 0.6
-PESO_PUNTEGGIO = 0.4
-PREZZO_MINIMO = 1
-PREZZO_MASSIMO = 500
-CONVENIENZA_MINIMA = 0.5
+# Costanti legacy (pipeline.py usa --crediti/--partecipanti)
