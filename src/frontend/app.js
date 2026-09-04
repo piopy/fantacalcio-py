@@ -1,0 +1,292 @@
+'use strict';
+const LS = 'fanta-asta-v1', LSD = LS + '-data';
+const ROLES = ['POR', 'DIF', 'CEN', 'ATT'];
+const BUILTIN = { partecipanti: 10, crediti: 1000, slot: { POR: 3, DIF: 8, CEN: 8, ATT: 6 } };
+const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Punteggio)/;
+
+let DATA = [], HEADERS = [], PRICE = '', TEAMCOL = '', GOLP = '', XGP = '';
+let state = null, sort = { col: 'Punteggio Asta (/100)', dir: -1 }, filt = { q: '', role: 'ALL', free: true, gem: false, star: false, shop: false };
+let expanded = null;
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const num = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? null : n; };
+
+function roleOf(v) {
+  v = String(v || '').toUpperCase();
+  if (v.startsWith('POR')) return 'POR';
+  if (v.startsWith('DIF')) return 'DIF';
+  if (v.startsWith('CEN') || v.startsWith('TRE') || v === 'C' || v === 'T') return 'CEN';
+  if (v.startsWith('ATT') || v === 'A') return 'ATT';
+  return v;
+}
+
+function blankSetup(cfg) {
+  const n = cfg.partecipanti || 10;
+  return { credits: cfg.crediti || 1000, slots: Object.assign({}, BUILTIN.slot, cfg.slot), teams: Array.from({ length: n }, (_, i) => 'Squadra ' + (i + 1)), mine: 0 };
+}
+function blankState(cfg) { return { setup: blankSetup(cfg), assigned: {}, stars: [], shop: {}, hist: [] }; }
+
+function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
+function load() { try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.setup) return s; } catch (e) {} return null; }
+
+function setData(rows) {
+  DATA = rows;
+  HEADERS = Object.keys(rows[0] || {});
+  PRICE = HEADERS.find(h => /^Prezzo_/.test(h)) || '';
+  TEAMCOL = HEADERS.find(h => /^Squadra Attuale/.test(h)) || 'Squadra';
+  GOLP = HEADERS.find(h => /^Gol /.test(h)) || '';
+  XGP = HEADERS.find(h => /^xG /.test(h)) || '';
+  if (!HEADERS.includes(sort.col)) sort = { col: 'Punteggio Asta (/100)', dir: -1 };
+  try { localStorage.setItem(LSD, JSON.stringify(rows)); } catch (e) {}
+  $('filestatus').textContent = rows.length + ' giocatori caricati';
+  renderAll();
+}
+
+function teamStats() {
+  const s = state.setup;
+  return s.teams.map((name, i) => {
+    const ros = Object.entries(state.assigned).filter(([, a]) => a.t === i)
+      .map(([n, a]) => ({ n, p: a.p, r: roleOf(byName(n)?.['Ruolo']) }));
+    const spent = ros.reduce((t, x) => t + (+x.p || 0), 0);
+    const per = {}; ROLES.forEach(r => per[r] = ros.filter(x => x.r === r));
+    const filled = ros.length, total = ROLES.reduce((t, r) => t + (+s.slots[r] || 0), 0);
+    const left = s.credits - spent, open = total - filled;
+    return { i, name, ros, spent, left, per, open, maxBid: left - open };
+  });
+}
+const byName = n => DATA.find(r => r['Calciatore'] === n);
+
+// ---------- listone ----------
+const MAIN = () => ['Calciatore', 'Ruolo', TEAMCOL, 'Punteggio Asta (/100)', PRICE, 'Fantamedia Prev', GOLP, XGP].filter(c => c && HEADERS.includes(c));
+
+function filtered() {
+  const q = filt.q.trim().toLowerCase();
+  let rows = DATA.filter(r => {
+    if (filt.free && state.assigned[r['Calciatore']]) return false;
+    if (filt.role !== 'ALL' && roleOf(r['Ruolo']) !== filt.role) return false;
+    if (filt.gem && r['Hidden Gem?'] !== 'SÌ') return false;
+    if (filt.star && !state.stars.includes(r['Calciatore'])) return false;
+    if (filt.shop && !state.shop[r['Calciatore']]) return false;
+    if (q && !(String(r['Calciatore']).toLowerCase().includes(q) || String(r[TEAMCOL]).toLowerCase().includes(q))) return false;
+    return true;
+  });
+  const { col, dir } = sort;
+  rows = rows.slice().sort((a, b) => {
+    if (col === 'Calciatore') return dir * String(a[col]).localeCompare(String(b[col]));
+    const x = num(a[col]), y = num(b[col]);
+    if (x === null && y === null) return 0;
+    if (x === null) return 1; if (y === null) return -1;
+    return dir * (x - y);
+  });
+  return rows;
+}
+
+function renderList() {
+  const cols = MAIN();
+  $('thead').innerHTML = '<th></th>' + cols.map(c => {
+    const lbl = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', [TEAMCOL]: 'Squadra', 'Punteggio Asta (/100)': 'Punt.', [PRICE]: 'Prz', 'Fantamedia Prev': 'FM' }[c] || c;
+    const arrow = sort.col === c ? (sort.dir === 1 ? ' ▲' : ' ▼') : '';
+    const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
+    return `<th${cls} data-c="${esc(c)}">${esc(lbl)}${arrow}</th>`;
+  }).join('') + '<th>Stato</th>';
+  $('thead').querySelectorAll('th[data-c]').forEach(th => th.onclick = () => {
+    const c = th.dataset.c;
+    sort = sort.col === c ? { col: c, dir: -sort.dir } : { col: c, dir: c === 'Calciatore' ? 1 : -1 };
+    renderList();
+  });
+  const rows = filtered();
+  $('count').textContent = rows.length + ' / ' + DATA.length + ' giocatori';
+  const tb = $('tbody');
+  tb.innerHTML = '';
+  const frag = document.createDocumentFragment();
+  rows.slice(0, 500).forEach(r => {
+    const n = r['Calciatore'], a = state.assigned[n], star = state.stars.includes(n), shop = state.shop[n];
+    const tr = document.createElement('tr');
+    if (a) tr.className = 'taken'; if (star) tr.className += ' star'; if (shop) tr.className += ' shop';
+    let tds = `<td><button class="starbtn${star ? ' on' : ''}" data-star="${esc(n)}">★</button></td>`;
+    cols.forEach(c => {
+      let v = r[c];
+      if (c === PRICE || c === 'Punteggio Asta (/100)') { const x = num(v); v = x === null ? '—' : (c === PRICE ? Math.round(x) : x); }
+      const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
+      tds += `<td${cls}>${esc(v)}</td>`;
+    });
+    let st;
+    if (a) {
+      const diff = PRICE ? num(r[PRICE]) - a.p : null;
+      const b = diff === null ? '' : diff >= 0 ? ` <span class="badge hit">colpo +${Math.round(diff)}</span>` : ` <span class="badge miss">pacco ${Math.round(diff)}</span>`;
+      st = `${esc(state.setup.teams[a.t])} ${a.p}${b}`;
+    } else st = `<button data-assign="${esc(n)}">Assegna</button>`;
+    tds += `<td>${st}</td>`;
+    tr.innerHTML = tds;
+    tr.ondblclick = () => { expanded = expanded === n ? null : n; renderList(); };
+    if (expanded === n) {
+      const d = document.createElement('tr');
+      d.className = 'detail';
+      d.innerHTML = `<td colspan="${cols.length + 2}">${detailHtml(r)}</td>`;
+      frag.appendChild(tr); frag.appendChild(d);
+    } else frag.appendChild(tr);
+  });
+  tb.appendChild(frag);
+  if (rows.length > 500) $('count').textContent += ' (primi 500 — restringi la ricerca)';
+  tb.querySelectorAll('[data-star]').forEach(b => b.onclick = e => { e.stopPropagation(); toggleStar(b.dataset.star); });
+  tb.querySelectorAll('[data-assign]').forEach(b => b.onclick = () => { expanded = b.dataset.assign; renderList(); setTimeout(() => $('as-team')?.focus(), 0); });
+  bindDetail(tb);
+}
+
+function detailHtml(r) {
+  const n = r['Calciatore'], a = state.assigned[n], shop = state.shop[n];
+  const kv = HEADERS.filter(h => h !== 'Calciatore').map(h => `<span><b>${esc(h)}:</b> ${esc(r[h])}</span>`).join('');
+  const opts = state.setup.teams.map((t, i) => `<option value="${i}"${i === state.setup.mine ? ' selected' : ''}>${esc(t)}</option>`).join('');
+  return `<div class="kv">${kv}</div>
+    <div class="row">
+      <select id="as-team">${opts}</select>
+      <input id="as-price" type="number" min="1" value="${Math.round(num(r[PRICE]) || 1)}" style="width:80px">
+      <button id="as-go">${a ? 'Riassegna' : 'Assegna'}</button>
+      ${a ? '<button id="as-rm">Svincola</button>' : ''}
+      <button id="sh-go">${shop ? 'Modifica nota' : '+ Lista spesa'}</button>
+      ${shop ? '<button id="sh-rm">Togli da lista</button>' : ''}
+    </div>
+    ${shop ? `<div>📝 target ${esc(shop.target || '—')} — ${esc(shop.note || '')}</div>` : ''}`;
+}
+
+function bindDetail(tb) {
+  const go = $('as-go');
+  if (!go) return;
+  go.onclick = () => {
+    const t = +$('as-team').value, p = +$('as-price').value || 1;
+    assign(expanded, t, p); expanded = null; renderAll();
+  };
+  const rm = $('as-rm');
+  if (rm) rm.onclick = () => { unassign(expanded); expanded = null; renderAll(); };
+  $('sh-go').onclick = () => {
+    const cur = state.shop[expanded] || { note: '', target: '' };
+    const target = prompt('Prezzo target (crediti):', cur.target || '');
+    if (target === null) return;
+    const note = prompt('Nota:', cur.note || '');
+    if (note === null) return;
+    state.shop[expanded] = { target, note }; save(); renderAll();
+  };
+  const sr = $('sh-rm');
+  if (sr) sr.onclick = () => { delete state.shop[expanded]; save(); renderAll(); };
+}
+
+function toggleStar(n) {
+  const i = state.stars.indexOf(n);
+  if (i >= 0) state.stars.splice(i, 1); else state.stars.push(n);
+  save(); renderList();
+}
+function assign(n, t, p) { state.hist.push({ op: 'assign', n, prev: state.assigned[n] || null }); state.assigned[n] = { t, p }; save(); }
+function unassign(n) { state.hist.push({ op: 'unassign', n, prev: state.assigned[n] || null }); delete state.assigned[n]; save(); }
+
+// ---------- squadre ----------
+function renderTeams() {
+  const ts = teamStats(), me = ts[state.setup.mine] || ts[0];
+  const slotHtml = t => ROLES.map(r => `${r} ${t.per[r].length}/${state.setup.slots[r] || 0}`).join(' · ');
+  const rosHtml = (t, removable) => {
+    const items = [];
+    ROLES.forEach(r => t.per[r].forEach(x => items.push(`<li>${esc(x.n)} (${r}) — ${x.p}${removable ? ` <button class="rm" data-rm="${esc(x.n)}">✕</button>` : ''}</li>`)));
+    return items.length ? `<ul class="roster">${items.join('')}</ul>` : '<i>rosa vuota</i>';
+  };
+  $('myteam').innerHTML = `<div class="card"><h2>⭐ ${esc(me.name)} (mia)</h2>
+    <div class="row"><b>Residuo: ${me.left}</b><span>Speso: ${me.spent}</span><span>Max offerta: <b>${me.maxBid}</b></span></div>
+    <div>${slotHtml(me)}</div>${rosHtml(me, true)}</div>`;
+  const need = ROLES.filter(r => me.per[r].length < (+state.setup.slots[r] || 0));
+  const alerts = need.map(r => {
+    const who = ts.filter(t => t.i !== me.i && t.per[r].length < (+state.setup.slots[r] || 0)).map(t => esc(t.name)).join(', ');
+    return who ? `<div>⚠️ ${r}: cercano anche ${who}</div>` : '';
+  }).join('');
+  $('opps').innerHTML = alerts + ts.filter(t => t.i !== me.i).map(t =>
+    `<div class="card"><b>${esc(t.name)}</b> — residuo ${t.left}, speso ${t.spent}, max ${t.maxBid}<br>${slotHtml(t)}${rosHtml(t, true)}</div>`
+  ).join('');
+  $('opps').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { unassign(b.dataset.rm); renderAll(); });
+  $('myteam').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { unassign(b.dataset.rm); renderAll(); });
+}
+
+// ---------- setup ----------
+function renderSetup() {
+  const s = state.setup;
+  $('s-credits').value = s.credits;
+  $('s-por').value = s.slots.POR; $('s-dif').value = s.slots.DIF; $('s-cen').value = s.slots.CEN; $('s-att').value = s.slots.ATT;
+  $('s-teams').innerHTML = s.teams.map((t, i) =>
+    `<div class="row"><input data-t="${i}" value="${esc(t)}"><label><input type="radio" name="mine" value="${i}"${i === s.mine ? ' checked' : ''}> mia</label>${s.teams.length > 2 ? `<button class="rm" data-del="${i}">✕</button>` : ''}</div>`
+  ).join('');
+  $('s-teams').querySelectorAll('[data-del]').forEach(b => b.onclick = () => {
+    const i = +b.dataset.del;
+    state.setup.teams.splice(i, 1);
+    Object.keys(state.assigned).forEach(n => { if (state.assigned[n].t === i) delete state.assigned[n]; else if (state.assigned[n].t > i) state.assigned[n].t--; });
+    if (state.setup.mine >= state.setup.teams.length) state.setup.mine = 0;
+    save(); renderAll();
+  });
+}
+
+// ---------- shell ----------
+function renderAll() { renderList(); renderTeams(); renderSetup(); }
+
+function readFile(file, cb) {
+  const rd = new FileReader();
+  rd.onload = () => {
+    try {
+      const j = JSON.parse(rd.result);
+      const rows = Array.isArray(j) ? j : j.players || j.records || j.data || j.rows;
+      if (!rows || !rows.length) throw 0;
+      setData(rows);
+    } catch (e) { alert('JSON non valido: serve array di righe (sidecar pipeline)'); }
+  };
+  rd.readAsText(file);
+}
+
+function init() {
+  state = load();
+  fetch('config.json').then(r => r.json()).then(cfg => { if (!state) { state = blankState(cfg); save(); } renderSetup(); })
+    .catch(() => { if (!state) { state = blankState(BUILTIN); save(); } renderSetup(); });
+  try { const d = JSON.parse(localStorage.getItem(LSD)); if (d && d.length) setData(d); } catch (e) {}
+  document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
+    document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
+    b.classList.add('active');
+    document.querySelectorAll('.view').forEach(v => v.hidden = true);
+    $('view-' + b.dataset.view).hidden = false;
+  });
+  $('file').onchange = e => e.target.files[0] && readFile(e.target.files[0]);
+  let deb; $('q').oninput = e => { clearTimeout(deb); deb = setTimeout(() => { filt.q = e.target.value; renderList(); }, 120); };
+  ['ALL', ...ROLES].forEach(r => {
+    const b = document.createElement('button');
+    b.textContent = r === 'ALL' ? 'Tutti' : r;
+    b.className = r === 'ALL' ? 'on' : '';
+    b.onclick = () => { filt.role = r; $('rolebtns').querySelectorAll('button').forEach(x => x.classList.remove('on')); b.classList.add('on'); renderList(); };
+    $('rolebtns').appendChild(b);
+  });
+  $('f-free').onchange = e => { filt.free = e.target.checked; renderList(); };
+  $('f-gem').onchange = e => { filt.gem = e.target.checked; renderList(); };
+  $('f-star').onchange = e => { filt.star = e.target.checked; renderList(); };
+  $('f-shop').onchange = e => { filt.shop = e.target.checked; renderList(); };
+  $('undo').onclick = () => {
+    const h = state.hist.pop();
+    if (!h) return;
+    if (h.prev) state.assigned[h.n] = h.prev; else delete state.assigned[h.n];
+    save(); renderAll();
+  };
+  $('s-add').onclick = () => { state.setup.teams.push('Squadra ' + (state.setup.teams.length + 1)); save(); renderAll(); };
+  $('s-save').onclick = () => {
+    state.setup.credits = +$('s-credits').value || state.setup.credits;
+    state.setup.slots = { POR: +$('s-por').value || 0, DIF: +$('s-dif').value || 0, CEN: +$('s-cen').value || 0, ATT: +$('s-att').value || 0 };
+    $('s-teams').querySelectorAll('[data-t]').forEach(inp => state.setup.teams[+inp.dataset.t] = inp.value || ('Squadra ' + (+inp.dataset.t + 1)));
+    const m = document.querySelector('input[name=mine]:checked');
+    if (m) state.setup.mine = +m.value;
+    save(); renderAll();
+  };
+  $('s-export').onclick = () => {
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], { type: 'application/json' }));
+    a.download = 'asta-stato.json'; a.click();
+  };
+  $('s-import').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { state = JSON.parse(rd.result); save(); renderAll(); } catch (err) { alert('Stato non valido'); } };
+    rd.readAsText(f);
+  };
+  $('s-reset').onclick = () => { if (confirm('Azzera assegnazioni?')) { state.assigned = {}; state.hist = []; save(); renderAll(); } };
+  renderAll();
+}
+document.addEventListener('DOMContentLoaded', init);

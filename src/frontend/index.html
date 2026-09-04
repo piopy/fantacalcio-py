@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Fanta Asta — portale offline</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+  <h1>Fanta Asta</h1>
+  <nav>
+    <button data-view="list" class="active">Listone</button>
+    <button data-view="teams">Squadre</button>
+    <button data-view="setup">Setup</button>
+  </nav>
+  <div id="filebar">
+    <label class="filebtn">Carica JSON <input type="file" id="file" accept=".json,application/json" hidden></label>
+    <span id="filestatus">nessun listone</span>
+    <button id="undo" title="Annulla ultima assegnazione">↩ Undo</button>
+  </div>
+</header>
+<main>
+  <section id="view-list" class="view">
+    <div id="filters">
+      <input id="q" type="search" placeholder="Cerca giocatore…" autocomplete="off">
+      <div id="rolebtns"></div>
+      <label><input type="checkbox" id="f-free" checked> disponibili</label>
+      <label><input type="checkbox" id="f-gem"> gem</label>
+      <label><input type="checkbox" id="f-star"> stellati</label>
+      <label><input type="checkbox" id="f-shop"> lista spesa</label>
+    </div>
+    <div id="count"></div>
+    <table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
+  </section>
+  <section id="view-teams" class="view" hidden>
+    <div id="myteam"></div>
+    <h2>Avversari</h2>
+    <div id="opps"></div>
+  </section>
+  <section id="view-setup" class="view" hidden>
+    <h2>Setup asta</h2>
+    <div class="grid">
+      <label>Crediti <input id="s-credits" type="number" min="1"></label>
+      <label>POR <input id="s-por" type="number" min="1"></label>
+      <label>DIF <input id="s-dif" type="number" min="1"></label>
+      <label>CEN <input id="s-cen" type="number" min="1"></label>
+      <label>ATT <input id="s-att" type="number" min="1"></label>
+    </div>
+    <h3>Squadre <button id="s-add">+ aggiungi</button></h3>
+    <div id="s-teams"></div>
+    <div class="row">
+      <button id="s-save">Salva setup</button>
+      <button id="s-export">Export stato</button>
+      <label class="filebtn">Import stato <input type="file" id="s-import" accept=".json" hidden></label>
+      <button id="s-reset" class="danger">Azzera asta</button>
+    </div>
+  </section>
+</main>
+<script src="app.js"></script>
+</body>
+</html>
