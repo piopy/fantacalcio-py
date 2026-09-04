@@ -1,0 +1,132 @@
+import os, json, socket, requests, pandas as pd
+from src import config
+from src.fpd import scrape_fpd
+from src.utils import norm
+
+HISTORIC_TABLES = {
+    2024: ["Napoli", "Inter", "Atalanta", "Juventus", "Roma", "Fiorentina", "Lazio", "Milan", "Bologna", "Como", "Torino", "Udinese", "Genoa", "Verona", "Lecce", "Parma", "Cagliari", "Empoli", "Venezia", "Monza"],
+    2025: ["Napoli", "Inter", "Atalanta", "Juventus", "Roma", "Milan", "Lazio", "Fiorentina", "Bologna", "Como", "Torino", "Udinese", "Genoa", "Lecce", "Verona", "Parma", "Cagliari", "Sassuolo", "Pisa", "Cremonese"],
+}
+
+
+def _weights_from_table(table):
+    n = len(table)
+    w = {}
+    for i, team in enumerate(table):
+        w[norm(team)] = round(1.15 - i * (0.30 / (n - 1)), 3)
+    return w, min(w.values())
+
+
+def _fanta_get(url, timeout=20):
+    from dotenv import load_dotenv
+    load_dotenv(".env")
+    mail = os.getenv("FSTATS_MAIL")
+    pwd = os.getenv("FSTATS_PASSWORD")
+    if not mail or not pwd:
+        return None
+    r = requests.post(config.decode("aHR0cHM6Ly9oM3BweGlycXNnLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3Byb2QvYXV0aC9lbWFpbC9sb2dpbg=="),
+        json={"email": mail, "password": pwd},
+        headers={"content-type": "application/json", "origin": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "referer": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "x-client-id": config.decode("ZmFudGFnb2F0LWFwcA=="), "user-agent": "Mozilla/5.0"}, timeout=timeout)
+    r.raise_for_status()
+    tok = r.json().get("access_token")
+    if not tok:
+        return None
+    orig = socket.getaddrinfo
+
+    def patched(h, p, *a, **kw):
+        if h == config.decode("YXBpLmZhbnRhZ29hdC5pdA=="):
+            return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('188.114.96.7', p))]
+        return orig(h, p, *a, **kw)
+
+    socket.getaddrinfo = patched
+    try:
+        rr = requests.get(url, headers={"accept": "application/json", "authorization": f"Bearer {tok}", "origin": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "referer": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "user-agent": "Mozilla/5.0"}, timeout=timeout)
+        if rr.status_code != 200:
+            return None
+        return rr.json()
+    finally:
+        socket.getaddrinfo = orig
+
+
+def get_tier_weights(anno):
+    """Pesi deterministici da classifica anno-1. Neopromosse = peso minimo uguale."""
+    season = anno - 1
+    table = None
+    try:
+        j = _fanta_get("https://api.fantagoat.it/v1/standings", timeout=10)
+        if j:
+            data = j.get("data", [])
+            if data and max(d.get("played", 0) for d in data) >= 34:
+                table = [d["team_name"] for d in sorted(data, key=lambda x: x["position"])]
+    except Exception:
+        pass
+    if not table:
+        table = HISTORIC_TABLES.get(season)
+    if not table:
+        return {}, 0.85
+    return _weights_from_table(table)
+
+
+def fetch_understat(season: int):
+    cache = f"data/understat_{season}.json"
+    if not os.path.exists(cache):
+        league_url = f"{config.decode('aHR0cHM6Ly91bmRlcnN0YXQuY29tL2xlYWd1ZS9TZXJpZV9BLw==')}{season}"
+        stats_url = config.decode("aHR0cHM6Ly91bmRlcnN0YXQuY29tL21haW4vZ2V0UGxheWVyc1N0YXRzLw==")
+        s = requests.Session()
+        h = {"User-Agent": "Mozilla/5.0", "X-Requested-With": "XMLHttpRequest", "Referer": league_url}
+        s.get(league_url, headers=h)
+        r = s.post(stats_url, headers=h, data={"league": "Serie A", "season": str(season)})
+        r.raise_for_status()
+        players = r.json()["players"]
+        with open(cache, "w") as f:
+            json.dump(players, f)
+        print(f"[provider stats] {season}: {len(players)} scaricati")
+    with open(cache) as f:
+        df = pd.DataFrame(json.load(f))
+    for c in ["games", "time", "goals", "xG", "assists", "xA", "shots", "key_passes", "yellow_cards", "red_cards"]:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce").fillna(0)
+    df["norm"] = df["player_name"].map(norm)
+    return df
+
+
+def load_fp(force=False):
+    if force:
+        scrape_fpd(force=True)
+    elif not os.path.exists(config.GIOCATORI_CSV):
+        scrape_fpd()
+    df = pd.read_csv(config.GIOCATORI_CSV)
+    df["norm"] = df["Nome"].map(norm)
+    return df
+
+
+def fetch_provider_stats():
+    """1 chiamata bulk -> indice, titolarità, continuità, MV, clean sheets. Cache data/provider_ext.json"""
+    cache = "data/provider_ext.json"
+    if os.path.exists(cache):
+        data = json.load(open(cache))
+    else:
+        api_url = config.decode("aHR0cHM6Ly9hcGkuZmFudGFnb2F0Lml0L3YxL3BsYXllcnM=")
+        data = _fanta_get(api_url)
+        if not data:
+            print("[provider ext] credenziali mancanti o fetch fallito, skip")
+            return pd.DataFrame()
+        with open("data/provider_ext.json", "w") as f:
+            json.dump(data, f)
+        print(f"[provider ext] {len(data.get('items', []))} giocatori")
+    items = data.get("items", data) if isinstance(data, dict) else data
+    df = pd.DataFrame(items)
+    for c in ["fanta_index", "titolarita", "continuita", "mv"]:
+        if c in df.columns:
+            df[c] = pd.to_numeric(df[c], errors="coerce")
+    if "advanced_stats" in df.columns:
+        df["ext_xg"] = df["advanced_stats"].apply(lambda x: (x or {}).get("xg", 0) if isinstance(x, dict) else 0)
+        df["ext_xa"] = df["advanced_stats"].apply(lambda x: (x or {}).get("xa", 0) if isinstance(x, dict) else 0)
+        df["ext_clean"] = df["advanced_stats"].apply(lambda x: (x or {}).get("clean_sheet", 0) if isinstance(x, dict) else 0)
+    else:
+        df["ext_xg"] = 0
+        df["ext_xa"] = 0
+        df["ext_clean"] = 0
+    df["norm"] = df["display_name"].map(norm)
+    df["ext_fanta"] = df.get("fanta_index")
+    return df
