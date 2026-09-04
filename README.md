@@ -2,9 +2,9 @@
 
 Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fantacalcio. Il programma esegue le seguenti operazioni:
 
-1.  **Recupero Dati**: Scarica i dati dei calciatori da due fonti:
-    *   **FPEDIA**: per le statistiche della stagione in corso.
-    *   **FSTATS**: per le statistiche della stagione precedente.
+1.  **Recupero Dati**: Scarica i dati dei calciatori da:
+    *   **FPD**: per anagrafiche, ruoli, skills.
+    *   **Understat**: per xG/xA e stats stagione prev/corr (sostituisce FSTATS, non più funzionante).
 2.  **Elaborazione e Unione**: Pulisce, elabora e unisce i dati provenienti dalle diverse fonti in un unico dataset.
 3.  **Calcolo Indice di Convenienza**: Calcola un indice di "convenienza" per ogni giocatore. Questo indice mette in rapporto il valore di un giocatore (prezzo base all'asta) con il suo rendimento passato e attuale, aiutando a identificare giocatori sottovalutati.
 4.  **Salvataggio Risultati**: I risultati finali, ordinati per indice di convenienza, vengono salvati in un file Excel.
@@ -12,7 +12,7 @@ Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fanta
 ## Disclaimer
 
 - Se perdete il fanta non è colpa mia, io ci so arrivato secondo co sta roba. E l'anno dopo primo.
-- Il tool utilizza i csv prodotti da fpedia, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open.
+- Il tool utilizza i csv prodotti da fpd, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open.
 
 *Refactor del codice di cttynul*
 
@@ -43,15 +43,15 @@ Il progetto richiede delle credenziali per accedere a `FSTATS`. Queste credenzia
 
 Il file `config.py` contiene altre configurazioni, come gli URL per lo scraping e i percorsi dei file di output. Non dovrebbe essere necessario modificarlo per il funzionamento base.
 
-## Avvio del Progetto
+## Avvio del Progetto (nuovo main)
 
-Per avviare l'analisi completa, eseguire lo script `main.py` utilizzando `poetry`.
+Nuovo entrypoint: `pipeline.py` (logica asta: Punteggio_Asta_100, prezzi, Tier, Hidden Gem).
 
 ```bash
-poetry run python main.py
+poetry run python pipeline.py --anno 2026 --partecipanti 10 --crediti 500
 ```
 
-Lo script eseguirà tutti i passaggi (recupero, elaborazione, calcolo e salvataggio).
+Legacy (non maintained, FSTATS rotto): `main.py`, `cli.py`.
 
 ## Output
 

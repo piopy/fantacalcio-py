@@ -98,7 +98,7 @@ def cli(ctx, verbose):
 @click.option(
     "--source",
     "-s",
-    type=click.Choice(["fpedia", "fstats", "all"]),
+    type=click.Choice(["fpd", "fstats", "all"]),
     default="all",
     help="Data source to scrape",
 )
@@ -110,7 +110,7 @@ def scrape(ctx, source, force):
     """
     📥 Download player data from external sources
 
-    Scrapes data from FPEDIA and/or FSTATS depending on the source option.
+    Scrapes data from FPD and/or FSTATS depending on the source option.
     Uses intelligent caching to avoid unnecessary requests.
     """
     verbose = ctx.obj.get("verbose", False)
@@ -127,26 +127,26 @@ def scrape(ctx, source, force):
         os.makedirs(config.OUTPUT_DIR, exist_ok=True)
         progress.update(task, completed=True)
 
-        if source in ["fpedia", "all"]:
-            task = progress.add_task("Scraping FPEDIA data...", total=None)
+        if source in ["fpd", "all"]:
+            task = progress.add_task("Scraping FPD data...", total=None)
             try:
                 if force or not os.path.exists(config.GIOCATORI_CSV):
-                    data_retriever.scrape_fpedia(force)
-                    rprint("✅ [green]FPEDIA data scraped successfully[/green]")
+                    data_retriever.scrape_fpd(force)
+                    rprint("✅ [green]FPD data scraped successfully[/green]")
                 else:
                     # Show cache age info
                     age_info = _get_file_age_info(config.GIOCATORI_CSV)
                     if age_info:
-                        rprint(f"📁 [yellow]Using cached FPEDIA data from {age_info['date']} ({age_info['age']} old)[/yellow]")
+                        rprint(f"📁 [yellow]Using cached FPD data from {age_info['date']} ({age_info['age']} old)[/yellow]")
                         if age_info['days'] >= 7:
                             rprint("⚠️ [orange]Data is over a week old - consider using --force for fresh data[/orange]")
                         elif age_info['days'] >= 1:
                             rprint("💡 [blue]Tip: Use --force to download latest data[/blue]")
                     else:
-                        rprint("ℹ️ [yellow]Using cached FPEDIA data (use --force to re-download)[/yellow]")
+                        rprint("ℹ️ [yellow]Using cached FPD data (use --force to re-download)[/yellow]")
                 progress.update(task, completed=True)
             except Exception as e:
-                rprint(f"❌ [red]Error scraping FPEDIA: {e}[/red]")
+                rprint(f"❌ [red]Error scraping FPD: {e}[/red]")
 
         if source in ["fstats", "all"]:
             task = progress.add_task("Fetching FSTATS data...", total=None)
@@ -174,7 +174,7 @@ def scrape(ctx, source, force):
 @click.option(
     "--source",
     "-s",
-    type=click.Choice(["fpedia", "fstats", "all"]),
+    type=click.Choice(["fpd", "fstats", "all"]),
     default="all",
     help="Data source to analyze",
 )
@@ -202,21 +202,21 @@ def analyze(ctx, source, output, top):
 
         # Load data
         task = progress.add_task("Loading data files...", total=None)
-        df_fpedia, df_fstats = data_processor.load_dataframes()
+        df_fpd, df_fstats = data_processor.load_dataframes()
         progress.update(task, completed=True)
 
         # Store final dataframes for unified analysis
-        df_fpedia_final = None
+        df_fpd_final = None
         df_fstats_final = None
 
-        # Process FPEDIA
-        if source in ["fpedia", "all"] and not df_fpedia.empty:
-            task = progress.add_task("Processing FPEDIA data...", total=None)
-            df_processed = data_processor.process_fpedia_data(df_fpedia)
-            df_final = convenienza_calculator.calcola_convenienza_fpedia(df_processed)
+        # Process FPD
+        if source in ["fpd", "all"] and not df_fpd.empty:
+            task = progress.add_task("Processing FPD data...", total=None)
+            df_processed = data_processor.process_fpd_data(df_fpd)
+            df_final = convenienza_calculator.calcola_convenienza_fpd(df_processed)
 
             # Save results
-            output_path = os.path.join(config.OUTPUT_DIR, "fpedia_analysis.xlsx")
+            output_path = os.path.join(config.OUTPUT_DIR, "fpd_analysis.xlsx")
             df_final_sorted = df_final.sort_values(
                 by="Convenienza Potenziale", ascending=False
             )
@@ -257,18 +257,18 @@ def analyze(ctx, source, output, top):
 
             # Save both Excel and JSON
             excel_path, json_path = _save_analysis_results(
-                df_final_sorted[final_columns], "fpedia_analysis", "fpedia"
+                df_final_sorted[final_columns], "fpd_analysis", "fpd"
             )
 
             progress.update(task, completed=True)
-            rprint(f"✅ [green]FPEDIA analysis saved to {excel_path}[/green]")
+            rprint(f"✅ [green]FPD analysis saved to {excel_path}[/green]")
             rprint(f"📄 [blue]JSON export saved to {json_path}[/blue]")
 
             # Store for unified analysis
-            df_fpedia_final = df_final.copy()
+            df_fpd_final = df_final.copy()
 
             # Show top players
-            _show_top_players(df_final_sorted, "FPEDIA", top)
+            _show_top_players(df_final_sorted, "FPD", top)
 
         # Process FSTATS
         if source in ["fstats", "all"] and not df_fstats.empty:
@@ -381,15 +381,15 @@ def analyze(ctx, source, output, top):
 
         # Create unified analysis if both datasets were processed
         if (source == "all" and
-            df_fpedia_final is not None and df_fstats_final is not None):
+            df_fpd_final is not None and df_fstats_final is not None):
             task = progress.add_task("Creating unified analysis...", total=None)
 
             # Create unified dataset using already processed data
-            df_unified = _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final)
+            df_unified = _merge_datasets_with_mapping(df_fpd_final, df_fstats_final)
 
             if not df_unified.empty:
-                # Sort unified dataset by fpedia convenience (prioritize fpedia scoring)
-                sort_cols = ["fpedia_Convenienza Potenziale", "fstats_Convenienza Potenziale"]
+                # Sort unified dataset by fpd convenience (prioritize fpd scoring)
+                sort_cols = ["fpd_Convenienza Potenziale", "fstats_Convenienza Potenziale"]
                 available_sort_cols = [col for col in sort_cols if col in df_unified.columns]
                 if available_sort_cols:
                     df_unified_sorted = df_unified.sort_values(by=available_sort_cols[0], ascending=False)
@@ -416,7 +416,7 @@ def analyze(ctx, source, output, top):
 @click.option(
     "--source",
     "-s",
-    type=click.Choice(["fpedia", "fstats", "all"]),
+    type=click.Choice(["fpd", "fstats", "all"]),
     default="all",
     help="Data source for full pipeline",
 )
@@ -445,7 +445,7 @@ def run(ctx, source, force_scrape, top):
 @click.option(
     "--source",
     "-s",
-    type=click.Choice(["fpedia", "fstats"]),
+    type=click.Choice(["fpd", "fstats"]),
     required=True,
     help="Data source to inspect",
 )
@@ -459,13 +459,13 @@ def inspect(source, role, team, limit):
     Quick preview of the data to verify scraping worked correctly
     and explore player information before running analysis.
     """
-    df_fpedia, df_fstats = data_processor.load_dataframes()
+    df_fpd, df_fstats = data_processor.load_dataframes()
 
-    if source == "fpedia":
-        df = df_fpedia
+    if source == "fpd":
+        df = df_fpd
         if df.empty:
             rprint(
-                "❌ [red]No FPEDIA data found. Run 'fantacalcio scrape' first.[/red]"
+                "❌ [red]No FPD data found. Run 'fantacalcio scrape' first.[/red]"
             )
             return
     else:
@@ -499,7 +499,7 @@ def inspect(source, role, team, limit):
 
     # Add key columns
     key_cols = ["Nome", "Ruolo", "Squadra"]
-    if source == "fpedia":
+    if source == "fpd":
         key_cols.extend(["Punteggio", "Presenze campionato corrente"])
     else:
         key_cols.extend(["fanta_avg", "presences"])
@@ -536,15 +536,15 @@ def status():
     table.add_column("Details")
 
     # Check data files
-    fpedia_exists = os.path.exists(config.GIOCATORI_CSV)
-    fpedia_size = os.path.getsize(config.GIOCATORI_CSV) if fpedia_exists else 0
+    fpd_exists = os.path.exists(config.GIOCATORI_CSV)
+    fpd_size = os.path.getsize(config.GIOCATORI_CSV) if fpd_exists else 0
     fstats_exists = os.path.exists(config.PLAYERS_CSV)
     fstats_size = os.path.getsize(config.PLAYERS_CSV) if fstats_exists else 0
 
     table.add_row(
-        "FPEDIA Data",
-        "✅ Ready" if fpedia_exists and fpedia_size > 0 else "❌ Missing",
-        f"{fpedia_size // 1024} KB" if fpedia_exists else "Not found",
+        "FPD Data",
+        "✅ Ready" if fpd_exists and fpd_size > 0 else "❌ Missing",
+        f"{fpd_size // 1024} KB" if fpd_exists else "Not found",
     )
 
     table.add_row(
@@ -609,7 +609,7 @@ def _save_analysis_results(df, base_name, source_name):
     return excel_path, json_path
 
 
-def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=fuzzy_matcher.OUTPUT_FILE):
+def _merge_datasets_with_mapping(df_fpd_final, df_fstats_final, mapping_file=fuzzy_matcher.OUTPUT_FILE):
     """Merge datasets using fuzzy mapping"""
     import pandas as pd
 
@@ -630,13 +630,13 @@ def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=
         return pd.DataFrame()
 
     # Prepare datasets for merging
-    df_fpedia_merge = df_fpedia_final.copy()
+    df_fpd_merge = df_fpd_final.copy()
     df_fstats_merge = df_fstats_final.copy()
 
     # Rename columns to avoid conflicts
-    fpedia_cols = {
-        col: f"fpedia_{col}"
-        for col in df_fpedia_merge.columns
+    fpd_cols = {
+        col: f"fpd_{col}"
+        for col in df_fpd_merge.columns
         if col not in ["Nome", "Ruolo", "Squadra"]
     }
     fstats_cols = {
@@ -645,11 +645,11 @@ def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=
         if col not in ["Nome", "Ruolo", "Squadra"]
     }
 
-    df_fpedia_merge = df_fpedia_merge.rename(columns=fpedia_cols)
+    df_fpd_merge = df_fpd_merge.rename(columns=fpd_cols)
     df_fstats_merge = df_fstats_merge.rename(columns=fstats_cols)
 
     # Create mapping keys
-    df_fpedia_merge["mapped_name"] = df_fpedia_merge["Nome"].map(all_mapping)
+    df_fpd_merge["mapped_name"] = df_fpd_merge["Nome"].map(all_mapping)
     df_fstats_merge["mapped_name"] = (
         df_fstats_merge["fstats_firstname"].fillna("")
         + " "
@@ -658,24 +658,24 @@ def _merge_datasets_with_mapping(df_fpedia_final, df_fstats_final, mapping_file=
 
     # Merge
     df_merged = pd.merge(
-        df_fpedia_merge,
+        df_fpd_merge,
         df_fstats_merge,
         on="mapped_name",
         how="inner",
-        suffixes=("_fpedia", "_fstats"),
+        suffixes=("_fpd", "_fstats"),
     )
 
     # Reorder columns
     priority_cols = [
-        "Nome_fpedia",
+        "Nome_fpd",
         "mapped_name",
-        "Ruolo_fpedia",
-        "Squadra_fpedia",
-        "fpedia_Convenienza Potenziale",
+        "Ruolo_fpd",
+        "Squadra_fpd",
+        "fpd_Convenienza Potenziale",
         "fstats_Convenienza Potenziale",
-        "fpedia_Convenienza",
+        "fpd_Convenienza",
         "fstats_Convenienza",
-        "fpedia_Punteggio",
+        "fpd_Punteggio",
         "fstats_fantacalcioFantaindex",
         "fstats_fanta_avg",
         "fstats_presences",
@@ -706,10 +706,10 @@ def _show_top_players(df, source_name, top_n):
     for idx, (_, row) in enumerate(df_top.iterrows(), 1):
         # Handle different column names for unified vs single source datasets
         if source_name == "UNIFIED":
-            convenience = row.get("fpedia_Convenienza Potenziale", row.get("fstats_Convenienza Potenziale", 0))
-            name = str(row.get("Nome_fpedia", "N/A"))
-            role = str(row.get("Ruolo_fpedia", "N/A"))
-            team = str(row.get("Squadra_fpedia", "N/A"))
+            convenience = row.get("fpd_Convenienza Potenziale", row.get("fstats_Convenienza Potenziale", 0))
+            name = str(row.get("Nome_fpd", "N/A"))
+            role = str(row.get("Ruolo_fpd", "N/A"))
+            team = str(row.get("Squadra_fpd", "N/A"))
         else:
             convenience = row.get("Convenienza Potenziale", row.get("Convenienza", 0))
             name = str(row.get("Nome", "N/A"))

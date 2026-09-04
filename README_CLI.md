@@ -46,7 +46,7 @@ Avvia una delle configurazioni già presenti o creane una nuova.
 poetry run python cli.py run
 
 # Con opzioni avanzate  
-poetry run python cli.py run --source fpedia --top 30 --force-scrape
+poetry run python cli.py run --source fpd --top 30 --force-scrape
 ```
 
 #### 2. **Scraping Dati**
@@ -56,7 +56,7 @@ poetry run python cli.py run --source fpedia --top 30 --force-scrape
 poetry run python cli.py scrape
 
 # Solo da una fonte specifica
-poetry run python cli.py scrape --source fpedia
+poetry run python cli.py scrape --source fpd
 poetry run python cli.py scrape --source fstats
 
 # Forza il re-download
@@ -70,7 +70,7 @@ poetry run python cli.py scrape --force
 poetry run python cli.py analyze
 
 # Analizza solo una fonte
-poetry run python cli.py analyze --source fpedia
+poetry run python cli.py analyze --source fpd
 
 # Analiza tutto e crea dataset unificato
 poetry run python cli.py analyze --source all
@@ -83,18 +83,18 @@ poetry run python cli.py analyze --output ./custom_output/
 ```
 
 **Output generati automaticamente:**
-- `fpedia_analysis.xlsx` + `fpedia_analysis.json`
+- `fpd_analysis.xlsx` + `fpd_analysis.json`
 - `FSTATS_analysis.xlsx` + `FSTATS_analysis.json`
 - `unified_analysis.xlsx` + `unified_analysis.json` (con `--source all`)
 
 #### 4. **Ispezione Dati**
 
 ```bash
-# Visualizza preview dei dati FPEDIA
-poetry run python cli.py inspect --source fpedia
+# Visualizza preview dei dati FPD
+poetry run python cli.py inspect --source fpd
 
 # Filtra per ruolo
-poetry run python cli.py inspect --source fpedia --role Attaccanti
+poetry run python cli.py inspect --source fpd --role Attaccanti
 
 # Filtra per squadra  
 poetry run python cli.py inspect --source fstats --team Milan --limit 15
@@ -113,7 +113,7 @@ poetry run python cli.py status
 
 ```bash
 # Tutti questi comandi generano sia .xlsx che .json
-poetry run python cli.py analyze --source fpedia
+poetry run python cli.py analyze --source fpd
 poetry run python cli.py analyze --source fstats
 poetry run python cli.py analyze --source all
 poetry run python cli.py run
@@ -123,7 +123,7 @@ poetry run python cli.py run
 ```json
 {
   "metadata": {
-    "source": "fpedia",
+    "source": "fpd",
     "total_players": 523,
     "generated_at": "2025-01-15T14:30:45.123456",
     "columns": ["Nome", "Ruolo", "Squadra", "Convenienza Potenziale", ...]
@@ -186,7 +186,7 @@ poetry run python cli.py -v run --source all --top 20
 #### **Top Players Table**
 
 ```
-🏆 Top 20 Players - FPEDIA                                    
+🏆 Top 20 Players - FPD                                    
 ┌─────┬────────────────┬──────────────┬──────────┬─────────────┐
 │ 🏅  │ 👤 Name        │ ⚽ Role      │ 🏟️ Team  │ 💎 Conv... │
 │ Rank │                │              │          │             │
@@ -204,7 +204,7 @@ poetry run python cli.py -v run --source all --top 20
 ┌─────────────────┬──────────┬─────────────────────────────┐
 │ Component       │  Status  │ Details                     │
 ├─────────────────┼──────────┼─────────────────────────────┤
-│ FPEDIA Data     │ ✅ Ready │ 2847 KB                    │
+│ FPD Data     │ ✅ Ready │ 2847 KB                    │
 │ FSTATS Data     │ ✅ Ready │ 1923 KB                    │
 │ Output Dir      │ ✅ Ready │ data/output                │
 │ Environment     │ ✅ Found │ .env file for FSTATS creds │
@@ -244,5 +244,5 @@ Per utilizzare la nuova CLI, installa le dipendenze e usa `fantacalcio` invece d
 4. **Usa filters con `inspect`** per esplorare i dati
 5. **Combina `--force-scrape`** con `--source` per aggiornamenti mirati
 6. **🆕 File JSON automatici** - ideali per integrazioni con dashboard e API
-7. **🆕 Dataset unificato** - usa `--source all` per combinare FPEDIA + FSTATS
+7. **🆕 Dataset unificato** - usa `--source all` per combinare FPD + FSTATS
 8. **🆕 Metadata JSON** - timestamp e info utili per tracking cronologico
