@@ -4,7 +4,8 @@ const ROLES = ['POR', 'DIF', 'CEN', 'ATT'];
 const BUILTIN = { partecipanti: 10, crediti: 1000, slot: { POR: 3, DIF: 8, CEN: 8, ATT: 6 } };
 const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Punteggio)/;
 
-let DATA = [], HEADERS = [], PRICE = '', TEAMCOL = '', GOLP = '', XGP = '';
+let DATA = [], HEADERS = [], PRICE = '', TEAMCOL = '', GOLP = '', XGP = '', ASSP = '', XAP = '', PRESP = '';
+let GOLC = '', XGC = '', ASSC = '', XAC = '', PRESC = '', FMP = '', FML = '', TIT = '';
 let state = null, sort = { col: 'Punteggio Asta (/100)', dir: -1 }, filt = { q: '', role: 'ALL', free: true, gem: false, star: false, shop: false };
 let expanded = null;
 
@@ -25,7 +26,7 @@ function blankSetup(cfg) {
   const n = cfg.partecipanti || 10;
   return { credits: cfg.crediti || 1000, slots: Object.assign({}, BUILTIN.slot, cfg.slot), teams: Array.from({ length: n }, (_, i) => 'Squadra ' + (i + 1)), mine: 0 };
 }
-function blankState(cfg) { return { setup: blankSetup(cfg), assigned: {}, stars: [], shop: {}, hist: [] }; }
+function blankState(cfg) { return { setup: blankSetup(cfg), assigned: {}, stars: [], shop: {}, hist: [], cols: null }; }
 
 function save() { try { localStorage.setItem(LS, JSON.stringify(state)); } catch (e) {} }
 function load() { try { const s = JSON.parse(localStorage.getItem(LS)); if (s && s.setup) return s; } catch (e) {} return null; }
@@ -37,6 +38,16 @@ function setData(rows) {
   TEAMCOL = HEADERS.find(h => /^Squadra Attuale/.test(h)) || 'Squadra';
   GOLP = HEADERS.find(h => /^Gol /.test(h)) || '';
   XGP = HEADERS.find(h => /^xG /.test(h)) || '';
+  ASSP = HEADERS.find(h => /^Assist /.test(h)) || '';
+  XAP = HEADERS.find(h => /^xA /.test(h)) || '';
+  PRESP = HEADERS.find(h => /^Pres /.test(h)) || '';
+  const gol = HEADERS.filter(h => /^Gol /.test(h)), xg = HEADERS.filter(h => /^xG /.test(h));
+  const ass = HEADERS.filter(h => /^Assist /.test(h)), xa = HEADERS.filter(h => /^xA /.test(h));
+  const pres = HEADERS.filter(h => /^Pres /.test(h));
+  GOLC = gol[1] || ''; XGC = xg[1] || ''; ASSC = ass[1] || ''; XAC = xa[1] || ''; PRESC = pres[1] || '';
+  FMP = HEADERS.includes('Fantamedia Prev') ? 'Fantamedia Prev' : '';
+  FML = HEADERS.includes('Fantamedia Live') ? 'Fantamedia Live' : '';
+  TIT = HEADERS.includes('Titolarità') ? 'Titolarità' : '';
   if (!HEADERS.includes(sort.col)) sort = { col: 'Punteggio Asta (/100)', dir: -1 };
   try { localStorage.setItem(LSD, JSON.stringify(rows)); } catch (e) {}
   $('filestatus').textContent = rows.length + ' giocatori caricati';
@@ -58,7 +69,13 @@ function teamStats() {
 const byName = n => DATA.find(r => r['Calciatore'] === n);
 
 // ---------- listone ----------
-const MAIN = () => ['Calciatore', 'Ruolo', TEAMCOL, 'Punteggio Asta (/100)', PRICE, 'Fantamedia Prev', GOLP, XGP].filter(c => c && HEADERS.includes(c));
+const DEFAULT_COLS = () => ['Calciatore', 'Ruolo', TEAMCOL, 'Punteggio Asta (/100)', PRICE, FMP, GOLP, XGP].filter(c => c && HEADERS.includes(c));
+const visibleCols = () => {
+  const v = (state.cols || []).filter(c => HEADERS.includes(c));
+  return v.length ? v : DEFAULT_COLS();
+};
+const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Punteggio Asta (/100)': 'Punt.', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Motivo_Hidden_Gem': 'Motivo' };
+const shortLbl = c => SHORT[c] || (c === TEAMCOL ? 'Squadra' : (/^Prezzo_/.test(c) ? 'Prz' : c));
 
 function filtered() {
   const q = filt.q.trim().toLowerCase();
@@ -83,12 +100,11 @@ function filtered() {
 }
 
 function renderList() {
-  const cols = MAIN();
+  const cols = visibleCols();
   $('thead').innerHTML = '<th></th>' + cols.map(c => {
-    const lbl = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', [TEAMCOL]: 'Squadra', 'Punteggio Asta (/100)': 'Punt.', [PRICE]: 'Prz', 'Fantamedia Prev': 'FM' }[c] || c;
     const arrow = sort.col === c ? (sort.dir === 1 ? ' ▲' : ' ▼') : '';
     const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
-    return `<th${cls} data-c="${esc(c)}">${esc(lbl)}${arrow}</th>`;
+    return `<th${cls} data-c="${esc(c)}">${esc(shortLbl(c))}${arrow}</th>`;
   }).join('') + '<th>Stato</th>';
   $('thead').querySelectorAll('th[data-c]').forEach(th => th.onclick = () => {
     const c = th.dataset.c;
@@ -134,12 +150,51 @@ function renderList() {
   bindDetail(tb);
 }
 
+function parseSkills(s) {
+  if (!s) return [];
+  const t = String(s).trim();
+  if (!t || t === '[]') return [];
+  try { const j = JSON.parse(t.replace(/'/g, '"')); return Array.isArray(j) ? j : [t]; }
+  catch (e) { return t.replace(/[\[\]]/g, '').split(',').map(x => x.trim()).filter(Boolean); }
+}
+const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true';
+const fmt = (v, d = 0) => { const n = num(v); return n === null ? '—' : (d ? n.toFixed(d) : Math.round(n)); };
+
+function seasonLine(pref, g, x, a, xa, pr) {
+  const gv = num(g), xv = num(x);
+  let delta = '';
+  if (gv !== null && xv !== null && xv - gv >= 2) delta = ` <span class="good">(${(xv - gv >= 0 ? '+' : '') + (xv - gv).toFixed(1)} xG)</span>`;
+  return `Pres <b>${fmt(pr)}</b> · Gol <b>${fmt(g)}</b> · xG <b>${fmt(x, 1)}</b>${delta} · Ass <b>${fmt(a)}</b> · xA <b>${fmt(xa, 1)}</b>`;
+}
+
 function detailHtml(r) {
   const n = r['Calciatore'], a = state.assigned[n], shop = state.shop[n];
-  const kv = HEADERS.filter(h => h !== 'Calciatore').map(h => `<span><b>${esc(h)}:</b> ${esc(r[h])}</span>`).join('');
+  const inj = isTrue(r['Infortunato']);
+  const trend = String(r['Trend'] || '');
+  const tcls = trend === 'UP' ? 'up' : trend === 'DOWN' ? 'down' : '';
+  const gem = r['Hidden Gem?'] === 'SÌ';
+  const tit = num(TIT ? r[TIT] : null);
+  const skills = parseSkills(r['Skills']).map(s => `<span class="chip">${esc(s)}</span>`).join('') || '—';
+  const cons = isTrue(r['Consigliato']) ? ' <b class="up">✓ consigliato</b>' : '';
   const opts = state.setup.teams.map((t, i) => `<option value="${i}"${i === state.setup.mine ? ' selected' : ''}>${esc(t)}</option>`).join('');
-  return `<div class="kv">${kv}</div>
-    <div class="row">
+  return `<div class="dhead"><span class="nm">${esc(n)}</span><span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}</span>
+    ${gem ? '<span class="badge gem">GEM</span>' : ''}${inj ? '<span class="badge inj">INFORTUNATO</span>' : ''}</div>
+    <div class="drow"><span>Prz <span class="dbig">${fmt(r[PRICE])}</span></span>
+    <span>Punteggio <span class="dbig">${fmt(r['Punteggio Asta (/100)'], 1)}</span></span>
+    <span>FM prev <b>${fmt(r[FMP], 1)}</b> · live <b>${fmt(r[FML], 1)}</b></span>
+    <span>Trend <b class="${tcls}">${esc(trend || '—')}</b>${cons}</span></div>
+    <div class="dsec">Stagione scorsa${GOLP ? ' — ' + esc(GOLP.replace('Gol ', '')) : ''}</div>
+    <div>${seasonLine(0, r[GOLP], r[XGP], r[ASSP], r[XAP], r[PRESP])}</div>
+    ${GOLC ? `<div class="dsec">Stagione live — ${esc(GOLC.replace('Gol ', ''))}</div><div>${seasonLine(0, r[GOLC], r[XGC], r[ASSC], r[XAC], r[PRESC])}</div>` : ''}
+    <div class="dsec">Stato</div>
+    <div class="drow"><span>Titolarità ${tit === null ? '—' : `<b>${Math.round(tit)}%</b> <span class="bar"><i style="width:${Math.min(100, Math.max(0, tit))}%"></i></span>`}</span>
+    <span>Indice <b>${fmt(r['Indice Esterno'])}</b></span>
+    <span>Resist. infort. <b>${esc(r['Resist. infort.'] || '—')}</b></span>
+    <span>Gol/ass prev. <b>${esc(r['Gol prev.'] || '—')}/${esc(r['Assist prev.'] || '—')}</b></span></div>
+    <div style="margin-top:4px">${skills}</div>
+    ${r['Motivo'] && r['Motivo'] !== '-' ? `<div><i>${esc(r['Motivo'])}</i></div>` : ''}
+    ${r['Alternative Affini'] ? `<div class="dsec">Alternative</div><div>${esc(r['Alternative Affini'])}</div>` : ''}
+    <div class="row" style="margin-top:8px">
       <select id="as-team">${opts}</select>
       <input id="as-price" type="number" min="1" value="${Math.round(num(r[PRICE]) || 1)}" style="width:80px">
       <button id="as-go">${a ? 'Riassegna' : 'Assegna'}</button>
@@ -218,6 +273,23 @@ function renderSetup() {
     if (state.setup.mine >= state.setup.teams.length) state.setup.mine = 0;
     save(); renderAll();
   });
+  renderCols();
+}
+
+function renderCols() {
+  const box = $('s-cols');
+  if (!DATA.length) { box.innerHTML = '<i>Carica prima il JSON dal Listone per configurare le colonne.</i>'; $('s-prevh').innerHTML = ''; $('s-prevb').innerHTML = ''; return; }
+  const vis = new Set(visibleCols());
+  box.innerHTML = HEADERS.map(h => `<label><input type="checkbox" data-col="${esc(h)}"${vis.has(h) ? ' checked' : ''}> ${esc(shortLbl(h))}</label>`).join('');
+  box.querySelectorAll('[data-col]').forEach(cb => cb.onchange = () => {
+    const sel = [...box.querySelectorAll('[data-col]:checked')].map(x => x.dataset.col);
+    state.cols = HEADERS.filter(h => sel.includes(h));
+    save(); renderCols(); renderList();
+  });
+  const cols = visibleCols();
+  $('s-prevh').innerHTML = cols.map(c => `<th>${esc(shortLbl(c))}</th>`).join('');
+  $('s-prevb').innerHTML = DATA.slice(0, 3).map(r =>
+    `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('');
 }
 
 // ---------- shell ----------
