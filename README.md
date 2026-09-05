@@ -20,48 +20,66 @@ Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fanta
 
 ## Prerequisiti
 
-Per utilizzare questo progetto, è necessario avere installato **Python 3.10** o superiore e **Poetry** per la gestione delle dipendenze.
+Python 3.10+ e [uv](https://docs.astral.sh/uv/). (Il `pyproject.toml` è ancora in formato poetry: `uv` lo legge per le dipendenze, ma i comandi sotto usano `uv`, non `poetry`.)
 
 ## Installazione
 
 1.  **Clonare la repository (se non già fatto)**:
     ```bash
     git clone <url_della_repository>
-    cd fantacalcio-py-main
+    cd fantacalcio-py
     ```
 
 2.  **Installare le dipendenze**:
-    Questo progetto utilizza `poetry` per gestire le dipendenze. Per installarle, eseguire il seguente comando dalla root del progetto:
     ```bash
-    poetry install
+    uv sync
     ```
-    Questo comando creerà un ambiente virtuale e installerà tutte le librerie necessarie specificate nel file `pyproject.toml`.
+    Se un pacchetto manca al run: `uv pip install <pkg>` e rilancia.
 
 ## Configurazione
 
-Il progetto richiede delle credenziali per accedere a `FSTATS`. Queste credenziali vanno inserite in un file `.env` nella root del progetto.
-
-Il file `config.py` contiene altre configurazioni, come gli URL per lo scraping e i percorsi dei file di output. Non dovrebbe essere necessario modificarlo per il funzionamento base.
-
-## Avvio del Progetto (nuovo main)
-
-Nuovo entrypoint: `pipeline.py` (logica asta: Punteggio_Asta_100, prezzi, Tier, Hidden Gem).
+Crea un file `.env` nella root con le credenziali provider esterno (nome legacy: autenticano FantaGOAT, non FSTATS):
 
 ```bash
-poetry run python pipeline.py --anno 2026 --partecipanti 10 --crediti 500
+FSTATS_MAIL=tuamail@example.com
+FSTATS_PASSWORD=tupassword
 ```
 
-Legacy (non maintained, FSTATS rotto): `main.py`, `cli.py`.
+Senza `.env` (o con `--no-ext`) la pipeline gira comunque, senza indice esterno/titolarità/rose.
+
+`src/config.py` contiene URL e percorsi. Non serve modificarlo per l'uso base.
+
+## Avvio
+
+Entrypoint: `pipeline.py` (punteggio asta /100, prezzi per crediti, Hidden Gem, alternative).
+
+```bash
+uv run pipeline.py --anno 2026 --partecipanti 10 --crediti 500
+uv run pipeline.py --no-ext    # senza provider esterno
+uv run pipeline.py --force     # re-scrape FPD (~60s)
+```
 
 ## Output
 
-Al termine dell'esecuzione, verranno creati dei file Excel nella directory `data/output`. 
+In `data/output/`:
+- `fantacalcio_asta_<anno>_<anno+1>_<p>p_<cr>cr.xlsx` — Masterlist + Hidden_Gems + fogli per ruolo + Per_Squadra
+- stesso nome `.json` — stesse righe, per il frontend
+- `rose_<anno>_<anno+1>.json` — modulo, formazione, rigoristi per squadra di Serie A
+
+Colonne annate dinamiche da `--anno`: `Gol 25-26` = stagione scorsa, `Gol 26-27` = live.
+
+## Frontend asta (offline)
+
+Apri `src/frontend/index.html` nel browser, carica il `.json` (e il `rose_*.json` per la tab Serie A).
+Listone filtrabile/ordinabile, assegnazioni con budget per squadra, stelline, lista spesa con note, tab Infortunati.
+
+Legacy congelata: `cli.py` (verrà sostituita da TUI).
 
 ## WIP
 
 - [ ] Messa a punto del calcolo dell'indice di convenienza
-- [ ] Formazione consigliata
-- [ ] Frontend
+- [ ] Formazione consigliata (post-asta, da tab Asta)
+- [x] Frontend (`src/frontend/`)
 
 ## Special thanks!
 - [AndreaBozzo](https://github.com/AndreaBozzo/) per aver creato [la CLI figa](https://github.com/AndreaBozzo/fantacalcio-py)
