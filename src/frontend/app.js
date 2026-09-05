@@ -1,11 +1,12 @@
 'use strict';
-const LS = 'fanta-asta-v1', LSD = LS + '-data';
+const LS = 'fanta-asta-v1', LSD = LS + '-data', LSR = LS + '-rose';
 const ROLES = ['POR', 'DIF', 'CEN', 'ATT'];
 const BUILTIN = { partecipanti: 10, crediti: 1000, slot: { POR: 3, DIF: 8, CEN: 8, ATT: 6 } };
-const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Punteggio)/;
+const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Punteggio|Età|Forma)/;
 
 let DATA = [], HEADERS = [], PRICE = '', TEAMCOL = '', GOLP = '', XGP = '', ASSP = '', XAP = '', PRESP = '';
 let GOLC = '', XGC = '', ASSC = '', XAC = '', PRESC = '', FMP = '', FML = '', TIT = '';
+let ROSE = [];
 let state = null, sort = { col: 'Punteggio Asta (/100)', dir: -1 }, filt = { q: '', role: 'ALL', free: true, gem: false, star: false, shop: false };
 let expanded = null;
 
@@ -74,7 +75,7 @@ const visibleCols = () => {
   const v = (state.cols || []).filter(c => HEADERS.includes(c));
   return v.length ? v : DEFAULT_COLS();
 };
-const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Punteggio Asta (/100)': 'Punt.', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Motivo_Hidden_Gem': 'Motivo' };
+const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Punteggio Asta (/100)': 'Punt.', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Dettaglio infortunio': 'Dettaglio inf.', 'Consiglio rif.': 'Rif.', 'Nazionalità': 'Naz.', 'Forma media': 'Forma', 'Forma serie': 'Serie' };
 const shortLbl = c => SHORT[c] || (c === TEAMCOL ? 'Squadra' : (/^Prezzo_/.test(c) ? 'Prz' : c));
 
 function filtered() {
@@ -176,9 +177,35 @@ function detailHtml(r) {
   const tit = num(TIT ? r[TIT] : null);
   const skills = parseSkills(r['Skills']).map(s => `<span class="chip">${esc(s)}</span>`).join('') || '—';
   const cons = isTrue(r['Consigliato']) ? ' <b class="up">✓ consigliato</b>' : '';
+  const eta = r['Età'] ? ` · ${esc(r['Età'])} anni` : '';
+  const naz = r['Nazionalità'] ? ` · ${esc(r['Nazionalità'])}` : '';
+  // forma ultime gare
+  let formaHtml = '';
+  const serie = String(r['Forma serie'] || '').split('|').map(num).filter(v => v !== null);
+  if (serie.length) {
+    const d = serie[serie.length - 1] - serie[0];
+    const dc = d > 0 ? 'up' : d < 0 ? 'down' : '';
+    formaHtml = `<div class="dsec">Forma ultime gare</div>
+      <div class="drow"><span>${serie.join(' · ')}</span><span>media <b>${esc(r['Forma media'])}</b></span>
+      ${serie.length > 1 ? `<span class="${dc}"><b>${d > 0 ? '+' : ''}${d.toFixed(1)}</b></span>` : ''}</div>`;
+  }
+  // consiglio editoriale
+  const consiglio = r['Consiglio'] ? `<div class="dsec">Consiglio ${esc(r['Consiglio rif.'] || '')}</div>
+    <div><i>“${esc(String(r['Consiglio']).slice(0, 400))}”</i></div>` : '';
+  // simili con nostro punteggio
+  let similiHtml = '';
+  const sims = String(r['Simili'] || '').split('|').map(s => s.trim()).filter(Boolean);
+  if (sims.length) {
+    similiHtml = '<div class="dsec">Simili in squadra (nostro punteggio)</div><div>' + sims.map(s => {
+      const m = byName(s);
+      return m ? `<span class="chip"><b>${esc(s)}</b> ${fmt(m['Punteggio Asta (/100)'], 1)} · ${fmt(m[PRICE])}</span>` : `<span class="chip">${esc(s)}</span>`;
+    }).join('') + '</div>';
+  }
+  const dett = r['Dettaglio infortunio'] ? `<div>🏥 <b class="down">${esc(r['Dettaglio infortunio'])}</b></div>` : '';
   const opts = state.setup.teams.map((t, i) => `<option value="${i}"${i === state.setup.mine ? ' selected' : ''}>${esc(t)}</option>`).join('');
-  return `<div class="dhead"><span class="nm">${esc(n)}</span><span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}</span>
+  return `<div class="dhead"><span class="nm">${esc(n)}</span><span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}${eta}${naz}</span>
     ${gem ? '<span class="badge gem">GEM</span>' : ''}${inj ? '<span class="badge inj">INFORTUNATO</span>' : ''}</div>
+    ${dett}
     <div class="drow"><span>Prz <span class="dbig">${fmt(r[PRICE])}</span></span>
     <span>Punteggio <span class="dbig">${fmt(r['Punteggio Asta (/100)'], 1)}</span></span>
     <span>FM prev <b>${fmt(r[FMP], 1)}</b> · live <b>${fmt(r[FML], 1)}</b></span>
@@ -193,16 +220,20 @@ function detailHtml(r) {
     <span>Gol/ass prev. <b>${esc(r['Gol prev.'] || '—')}/${esc(r['Assist prev.'] || '—')}</b></span></div>
     <div style="margin-top:4px">${skills}</div>
     ${r['Motivo'] && r['Motivo'] !== '-' ? `<div><i>${esc(r['Motivo'])}</i></div>` : ''}
+    ${formaHtml}
+    ${consiglio}
+    ${similiHtml}
     ${r['Alternative Affini'] ? `<div class="dsec">Alternative</div><div>${esc(r['Alternative Affini'])}</div>` : ''}
     <div class="row" style="margin-top:8px">
       <select id="as-team">${opts}</select>
       <input id="as-price" type="number" min="1" value="${Math.round(num(r[PRICE]) || 1)}" style="width:80px">
       <button id="as-go">${a ? 'Riassegna' : 'Assegna'}</button>
       ${a ? '<button id="as-rm">Svincola</button>' : ''}
-      <button id="sh-go">${shop ? 'Modifica nota' : '+ Lista spesa'}</button>
-      ${shop ? '<button id="sh-rm">Togli da lista</button>' : ''}
     </div>
-    ${shop ? `<div>📝 target ${esc(shop.target || '—')} — ${esc(shop.note || '')}</div>` : ''}`;
+    ${shop ? `<div class="row">📝 target <input id="sh-target" type="number" min="0" value="${esc(shop.target || '')}" style="width:70px">
+      <input id="sh-note" value="${esc(shop.note || '')}" placeholder="nota…" style="flex:1;min-width:120px">
+      <button id="sh-save">Salva</button><button id="sh-rm">Togli</button></div>`
+    : `<div class="row"><button id="sh-add">+ Lista spesa</button></div>`}`;
 }
 
 function bindDetail(tb) {
@@ -214,14 +245,12 @@ function bindDetail(tb) {
   };
   const rm = $('as-rm');
   if (rm) rm.onclick = () => { unassign(expanded); expanded = null; renderAll(); };
-  $('sh-go').onclick = () => {
-    const cur = state.shop[expanded] || { note: '', target: '' };
-    const target = prompt('Prezzo target (crediti):', cur.target || '');
-    if (target === null) return;
-    const note = prompt('Nota:', cur.note || '');
-    if (note === null) return;
-    state.shop[expanded] = { target, note }; save(); renderAll();
-  };
+  $('sh-save') && ($('sh-save').onclick = () => {
+    state.shop[expanded] = { target: $('sh-target').value, note: $('sh-note').value };
+    save(); renderAll();
+  });
+  const add = $('sh-add');
+  if (add) add.onclick = () => { state.shop[expanded] = { target: '', note: '' }; save(); renderAll(); };
   const sr = $('sh-rm');
   if (sr) sr.onclick = () => { delete state.shop[expanded]; save(); renderAll(); };
 }
@@ -292,8 +321,63 @@ function renderCols() {
     `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('');
 }
 
+// ---------- infortunati ----------
+function renderInf() {
+  const rows = DATA.filter(r => r['Dettaglio infortunio'] || isTrue(r['Infortunato']))
+    .sort((a, b) => String(a['Calciatore']).localeCompare(String(b['Calciatore'])));
+  $('infcount').textContent = rows.length + ' indisponibili';
+  $('infbody').innerHTML = rows.map(r => {
+    const n = r['Calciatore'], a = state.assigned[n];
+    return `<tr${a ? ' class="taken"' : ''}><td><b>${esc(n)}</b></td><td>${esc(roleOf(r['Ruolo']))}</td>
+      <td>${esc(r[TEAMCOL])}</td><td>${esc(r['Dettaglio infortunio'] || 'infortunato')}</td>
+      <td>${a ? esc(state.setup.teams[a.t]) + ' ' + a.p : 'libero'}</td></tr>`;
+  }).join('');
+}
+
+// ---------- serie A ----------
+function setRose(rose) {
+  ROSE = rose.slice().sort((a, b) => String(a.squadra).localeCompare(String(b.squadra)));
+  try { localStorage.setItem(LSR, JSON.stringify(ROSE)); } catch (e) {}
+  $('rosestatus').textContent = ROSE.length + ' squadre caricate';
+  $('roseteam').innerHTML = '<option value="-1">Tutte le squadre</option>' +
+    ROSE.map((t, i) => `<option value="${i}">${esc(t.squadra)}</option>`).join('');
+  renderRose();
+}
+function roseCard(t) {
+  const byRole = { POR: [], DIF: [], CEN: [], ATT: [] }, other = [];
+  (t.formazione || []).forEach(s => {
+    const m = DATA.find(r => String(r['Calciatore']).split(' ')[0] === s);
+    if (m) byRole[roleOf(m['Ruolo'])].push({ s, m });
+    else other.push(s);
+  });
+  const jumpScore = x => {
+    const sc = fmt(x.m['Punteggio Asta (/100)'], 1);
+    return `<button data-jump="${esc(x.s)}">${esc(x.s)} <b>${sc}</b></button>`;
+  };
+  const fgroups = ['POR', 'DIF', 'CEN', 'ATT'].filter(r => byRole[r].length)
+    .map(r => `<div><b>${r}</b> ${byRole[r].map(jumpScore).join(' ')}</div>`).join('')
+    + (other.length ? `<div><b>?</b> ${other.map(s => `<button data-jump="${esc(s)}">${esc(s)}</button>`).join(' ')}</div>` : '');
+  const jump = s => `<button data-jump="${esc(s)}">${esc(s)}</button>`;
+  return `<div class="card"><h2>${esc(t.squadra)} ${t.modulo ? '· <b>' + esc(t.modulo) + '</b>' : ''}</h2>
+    <div class="dsec">Formazione probabile per ruolo (click = cerca nel listone)</div>
+    ${fgroups || '—'}
+    <div class="dsec">Rigoristi</div><div>${(t.rigoristi || []).map(esc).join(' · ') || '—'}</div>
+    <div class="dsec">Migliori</div><div>${(t.migliori || []).map(esc).join(' · ') || '—'}</div></div>`;
+}
+function renderRose() {
+  if (!ROSE.length) { $('rosecard').innerHTML = '<i>Carica il JSON rose (output pipeline) per vedere moduli e formazioni.</i>'; return; }
+  const v = +$('roseteam').value;
+  const list = v >= 0 ? [ROSE[v]] : ROSE;
+  $('rosecard').innerHTML = list.map(roseCard).join('');
+  $('rosecard').querySelectorAll('[data-jump]').forEach(b => b.onclick = () => {
+    filt.q = b.dataset.jump; $('q').value = filt.q;
+    document.querySelector('nav button[data-view=list]').click();
+    renderList();
+  });
+}
+
 // ---------- shell ----------
-function renderAll() { renderList(); renderTeams(); renderSetup(); }
+function renderAll() { renderList(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
 
 function readFile(file, cb) {
   const rd = new FileReader();
@@ -313,6 +397,14 @@ function init() {
   fetch('config.json').then(r => r.json()).then(cfg => { if (!state) { state = blankState(cfg); save(); } renderSetup(); })
     .catch(() => { if (!state) { state = blankState(BUILTIN); save(); } renderSetup(); });
   try { const d = JSON.parse(localStorage.getItem(LSD)); if (d && d.length) setData(d); } catch (e) {}
+  try { const rz = JSON.parse(localStorage.getItem(LSR)); if (rz && rz.length) setRose(rz); } catch (e) {}
+  $('rosefile').onchange = e => {
+    const f = e.target.files[0]; if (!f) return;
+    const rd = new FileReader();
+    rd.onload = () => { try { const j = JSON.parse(rd.result); if (!j.length) throw 0; setRose(j); } catch (err) { alert('Rose JSON non valido'); } };
+    rd.readAsText(f);
+  };
+  $('roseteam').onchange = renderRose;
   document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
     document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
     b.classList.add('active');

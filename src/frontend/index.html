@@ -11,7 +11,9 @@
   <h1>Fanta Asta</h1>
   <nav>
     <button data-view="list" class="active">Listone</button>
-    <button data-view="teams">Squadre</button>
+    <button data-view="teams">Asta</button>
+    <button data-view="seriea">Serie A</button>
+    <button data-view="inf">Infortunati</button>
     <button data-view="setup">Setup</button>
   </nav>
   <div id="filebar">
@@ -37,6 +39,18 @@
     <div id="myteam"></div>
     <h2>Avversari</h2>
     <div id="opps"></div>
+  </section>
+  <section id="view-seriea" class="view" hidden>
+    <div class="row">
+      <label class="filebtn">Carica rose JSON <input type="file" id="rosefile" accept=".json" hidden></label>
+      <span id="rosestatus">nessun dato rose</span>
+      <select id="roseteam"></select>
+    </div>
+    <div id="rosecard"></div>
+  </section>
+  <section id="view-inf" class="view" hidden>
+    <div id="infcount"></div>
+    <table id="inftbl"><thead><tr><th>Giocatore</th><th>R</th><th>Squadra</th><th>Dettaglio</th><th>Stato</th></tr></thead><tbody id="infbody"></tbody></table>
   </section>
   <section id="view-setup" class="view" hidden>
     <h2>Setup asta</h2>
