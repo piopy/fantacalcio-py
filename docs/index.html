@@ -19,7 +19,8 @@
   <div id="filebar">
     <label class="filebtn">Carica JSON <input type="file" id="file" accept=".json,application/json" hidden></label>
     <span id="filestatus">nessun listone</span>
-    <button id="undo" title="Annulla ultima assegnazione">↩ Undo</button>
+    <button id="undo-last" title="Annulla ultima assegnazione/svincolo">↩ Undo</button>
+    <button id="undo" title="Azzera tutto (setup, assegnazioni, liste, cache)">Reset</button>
   </div>
 </header>
 <main>
@@ -42,7 +43,6 @@
   </section>
   <section id="view-seriea" class="view" hidden>
     <div class="row">
-      <label class="filebtn">Carica rose JSON <input type="file" id="rosefile" accept=".json" hidden></label>
       <span id="rosestatus">nessun dato rose</span>
       <select id="roseteam"></select>
     </div>

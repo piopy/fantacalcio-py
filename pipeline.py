@@ -40,11 +40,10 @@ def main():
         df2.sort_values(f"Squadra Attuale ({args.anno}-{args.anno + 1})").to_excel(w, sheet_name="Per_Squadra", index=False)
     jout = os.path.splitext(out)[0] + ".json"
     with open(jout, "w", encoding="utf-8") as f:
-        json.dump(df2.fillna("").to_dict("records"), f, ensure_ascii=False)
-    rout = f"data/output/rose_{args.anno}_{args.anno + 1}.json"
-    with open(rout, "w", encoding="utf-8") as f:
-        json.dump(rose, f, ensure_ascii=False)
-    print(f"OK {out} + {jout} + {rout} — {len(df2)} gioc, {len(df2[df2['Hidden Gem?'] == 'SÌ'])} gem")
+        json.dump({"meta": {"anno": args.anno, "partecipanti": args.partecipanti, "crediti": args.crediti,
+                             "giocatori": len(df2), "gem": int((df2["Hidden Gem?"] == "SÌ").sum())},
+                   "players": df2.fillna("").to_dict("records"), "rose": rose}, f, ensure_ascii=False)
+    print(f"OK {out} + {jout} — {len(df2)} gioc, {len(df2[df2['Hidden Gem?'] == 'SÌ'])} gem")
 
 
 if __name__ == "__main__":

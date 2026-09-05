@@ -365,7 +365,7 @@ function roseCard(t) {
     <div class="dsec">Migliori</div><div>${(t.migliori || []).map(esc).join(' · ') || '—'}</div></div>`;
 }
 function renderRose() {
-  if (!ROSE.length) { $('rosecard').innerHTML = '<i>Carica il JSON rose (output pipeline) per vedere moduli e formazioni.</i>'; return; }
+  if (!ROSE.length) { $('rosecard').innerHTML = '<i>Ricarica il JSON unico (listone + rose) per vedere moduli e formazioni.</i>'; return; }
   const v = +$('roseteam').value;
   const list = v >= 0 ? [ROSE[v]] : ROSE;
   $('rosecard').innerHTML = list.map(roseCard).join('');
@@ -379,15 +379,19 @@ function renderRose() {
 // ---------- shell ----------
 function renderAll() { renderList(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
 
+function loadJson(j) {
+  const rows = Array.isArray(j) ? j : j.players || j.records || j.data || j.rows;
+  if (!rows || !rows.length) throw 0;
+  setData(rows);
+  if (!Array.isArray(j) && j.rose && j.rose.length) setRose(j.rose);
+  return rows.length;
+}
+
 function readFile(file, cb) {
   const rd = new FileReader();
   rd.onload = () => {
-    try {
-      const j = JSON.parse(rd.result);
-      const rows = Array.isArray(j) ? j : j.players || j.records || j.data || j.rows;
-      if (!rows || !rows.length) throw 0;
-      setData(rows);
-    } catch (e) { alert('JSON non valido: serve array di righe (sidecar pipeline)'); }
+    try { loadJson(JSON.parse(rd.result)); }
+    catch (e) { alert('JSON non valido: serve sidecar pipeline {players, rose}'); }
   };
   rd.readAsText(file);
 }
@@ -396,14 +400,12 @@ function init() {
   state = load();
   fetch('config.json').then(r => r.json()).then(cfg => { if (!state) { state = blankState(cfg); save(); } renderSetup(); })
     .catch(() => { if (!state) { state = blankState(BUILTIN); save(); } renderSetup(); });
-  try { const d = JSON.parse(localStorage.getItem(LSD)); if (d && d.length) setData(d); } catch (e) {}
+  try {
+    const d = JSON.parse(localStorage.getItem(LSD));
+    const rows = Array.isArray(d) ? d : d && (d.players || d.rows);
+    if (rows && rows.length) { setData(rows); if (!Array.isArray(d) && d.rose && d.rose.length) setRose(d.rose); }
+  } catch (e) {}
   try { const rz = JSON.parse(localStorage.getItem(LSR)); if (rz && rz.length) setRose(rz); } catch (e) {}
-  $('rosefile').onchange = e => {
-    const f = e.target.files[0]; if (!f) return;
-    const rd = new FileReader();
-    rd.onload = () => { try { const j = JSON.parse(rd.result); if (!j.length) throw 0; setRose(j); } catch (err) { alert('Rose JSON non valido'); } };
-    rd.readAsText(f);
-  };
   $('roseteam').onchange = renderRose;
   document.querySelectorAll('nav button').forEach(b => b.onclick = () => {
     document.querySelectorAll('nav button').forEach(x => x.classList.remove('active'));
@@ -424,11 +426,17 @@ function init() {
   $('f-gem').onchange = e => { filt.gem = e.target.checked; renderList(); };
   $('f-star').onchange = e => { filt.star = e.target.checked; renderList(); };
   $('f-shop').onchange = e => { filt.shop = e.target.checked; renderList(); };
-  $('undo').onclick = () => {
+  $('undo-last').onclick = () => {
     const h = state.hist.pop();
     if (!h) return;
     if (h.prev) state.assigned[h.n] = h.prev; else delete state.assigned[h.n];
     save(); renderAll();
+  };
+  $('undo').onclick = () => {
+    if (confirm('Azzera tutto (setup, assegnazioni, liste, cache)?')) {
+      localStorage.removeItem(LS); localStorage.removeItem(LSD); localStorage.removeItem(LSR);
+      location.reload();
+    }
   };
   $('s-add').onclick = () => { state.setup.teams.push('Squadra ' + (state.setup.teams.length + 1)); save(); renderAll(); };
   $('s-save').onclick = () => {
