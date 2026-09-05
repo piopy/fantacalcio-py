@@ -417,6 +417,11 @@ function renderRose() {
 }
 
 // ---------- shell ----------
+function exportState() {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], { type: 'application/json' }));
+  a.download = 'asta-stato.json'; a.click();
+}
 function renderAll() { renderList(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
 
 function loadJson(j) {
@@ -487,11 +492,8 @@ function init() {
     if (m) state.setup.mine = +m.value;
     save(); renderAll();
   };
-  $('s-export').onclick = () => {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], { type: 'application/json' }));
-    a.download = 'asta-stato.json'; a.click();
-  };
+  $('s-export').onclick = exportState;
+  $('save-top').onclick = exportState;
   $('s-import').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
     const rd = new FileReader();

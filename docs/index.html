@@ -1,81 +1,112 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Fantacalcio-py</title>
-<link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Fantacalcio-py</title>
+  <link rel="stylesheet" href="style.css">
 </head>
+
 <body>
-<header>
-  <h1>Fantacalcio-py</h1>
-  <nav>
-    <button data-view="list" class="active">Listone</button>
-    <button data-view="teams">Asta</button>
-    <button data-view="seriea">Serie A</button>
-    <button data-view="inf">Infortunati</button>
-    <button data-view="setup">Setup</button>
-  </nav>
-  <div id="filebar">
-    <label class="filebtn">Carica JSON <input type="file" id="file" accept=".json,application/json" hidden></label>
-    <span id="filestatus">nessun listone</span>
-    <button id="undo-last" title="Annulla ultima assegnazione/svincolo">↩ Undo</button>
-    <button id="undo" title="Azzera tutto (setup, assegnazioni, liste, cache)">Reset</button>
-  </div>
-</header>
-<main>
-  <section id="view-list" class="view">
-    <div id="filters">
-      <input id="q" type="search" placeholder="Cerca giocatore…" autocomplete="off">
-      <div id="rolebtns"></div>
-      <label><input type="checkbox" id="f-free" checked> disponibili</label>
-      <label><input type="checkbox" id="f-gem"> gem</label>
-      <label><input type="checkbox" id="f-star"> stellati</label>
-      <label><input type="checkbox" id="f-shop"> lista spesa</label>
+  <header>
+    <h1>Fantacalcio-py</h1>
+    <nav>
+      <button data-view="list" class="active">Listone</button>
+      <button data-view="teams">Asta</button>
+      <button data-view="seriea">Serie A</button>
+      <button data-view="inf">Infortunati</button>
+      <button data-view="setup">Setup</button>
+    </nav>
+    <div id="filebar">
+      <button id="save-top" class="danger">Salva dati</button>
+      <label class="filebtn">Carica JSON Fantacalcio-PY <input type="file" id="file" accept=".json,application/json"
+          hidden></label>
+      <span id="filestatus">nessun listone</span>
+      <button id="undo-last" title="Annulla ultima assegnazione/svincolo">↩ Undo</button>
+      <button id="undo" title="Azzera tutto (setup, assegnazioni, liste, cache)">Reset</button>
     </div>
-    <div id="count"></div>
-    <table id="tbl"><thead><tr id="thead"></tr></thead><tbody id="tbody"></tbody></table>
-  </section>
-  <section id="view-teams" class="view" hidden>
-    <table id="sumtbl"><thead><tr id="sumhead"></tr></thead><tbody id="sumbody"></tbody></table>
-    <div id="myteam"></div>
-    <h2>Avversari</h2>
-    <div id="opps"></div>
-  </section>
-  <section id="view-seriea" class="view" hidden>
-    <div class="row">
-      <span id="rosestatus">nessun dato rose</span>
-      <select id="roseteam"></select>
-    </div>
-    <div id="rosecard"></div>
-  </section>
-  <section id="view-inf" class="view" hidden>
-    <div id="infcount"></div>
-    <table id="inftbl"><thead><tr><th data-s="0">Giocatore</th><th data-s="1">R</th><th data-s="2">Squadra</th><th data-s="3">Dettaglio</th><th data-s="4">Stato</th></tr></thead><tbody id="infbody"></tbody></table>
-  </section>
-  <section id="view-setup" class="view" hidden>
-    <h2>Setup asta</h2>
-    <div class="grid">
-      <label>Crediti <input id="s-credits" type="number" min="1"></label>
-      <label>POR <input id="s-por" type="number" min="1"></label>
-      <label>DIF <input id="s-dif" type="number" min="1"></label>
-      <label>CEN <input id="s-cen" type="number" min="1"></label>
-      <label>ATT <input id="s-att" type="number" min="1"></label>
-    </div>
-    <h3>Squadre <button id="s-add">+ aggiungi</button></h3>
-    <div id="s-teams"></div>
-    <h3>Colonne listone</h3>
-    <div id="s-cols"></div>
-    <h4>Anteprima</h4>
-    <table id="s-prev"><thead><tr id="s-prevh"></tr></thead><tbody id="s-prevb"></tbody></table>
-    <div class="row">
-      <button id="s-save">Salva setup</button>
-      <button id="s-export">Export stato</button>
-      <label class="filebtn">Import stato <input type="file" id="s-import" accept=".json" hidden></label>
-      <button id="s-reset" class="danger">Azzera asta</button>
-    </div>
-  </section>
-</main>
-<script src="app.js"></script>
+  </header>
+  <main>
+    <section id="view-list" class="view">
+      <div id="filters">
+        <input id="q" type="search" placeholder="Cerca giocatore…" autocomplete="off">
+        <div id="rolebtns"></div>
+        <label><input type="checkbox" id="f-free" checked> disponibili</label>
+        <label><input type="checkbox" id="f-gem"> gem</label>
+        <label><input type="checkbox" id="f-star"> stellati</label>
+        <label><input type="checkbox" id="f-shop"> lista spesa</label>
+      </div>
+      <div id="count"></div>
+      <table id="tbl">
+        <thead>
+          <tr id="thead"></tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </section>
+    <section id="view-teams" class="view" hidden>
+      <table id="sumtbl">
+        <thead>
+          <tr id="sumhead"></tr>
+        </thead>
+        <tbody id="sumbody"></tbody>
+      </table>
+      <div id="myteam"></div>
+      <h2>Avversari</h2>
+      <div id="opps"></div>
+    </section>
+    <section id="view-seriea" class="view" hidden>
+      <div class="row">
+        <span id="rosestatus">nessun dato rose</span>
+        <select id="roseteam"></select>
+      </div>
+      <div id="rosecard"></div>
+    </section>
+    <section id="view-inf" class="view" hidden>
+      <div id="infcount"></div>
+      <table id="inftbl">
+        <thead>
+          <tr>
+            <th data-s="0">Giocatore</th>
+            <th data-s="1">R</th>
+            <th data-s="2">Squadra</th>
+            <th data-s="3">Dettaglio</th>
+            <th data-s="4">Stato</th>
+          </tr>
+        </thead>
+        <tbody id="infbody"></tbody>
+      </table>
+    </section>
+    <section id="view-setup" class="view" hidden>
+      <h2>Setup asta</h2>
+      <div class="grid">
+        <label>Crediti <input id="s-credits" type="number" min="1"></label>
+        <label>POR <input id="s-por" type="number" min="1"></label>
+        <label>DIF <input id="s-dif" type="number" min="1"></label>
+        <label>CEN <input id="s-cen" type="number" min="1"></label>
+        <label>ATT <input id="s-att" type="number" min="1"></label>
+      </div>
+      <h3>Squadre <button id="s-add">+ aggiungi</button></h3>
+      <div id="s-teams"></div>
+      <h3>Colonne listone</h3>
+      <div id="s-cols"></div>
+      <h4>Anteprima</h4>
+      <table id="s-prev">
+        <thead>
+          <tr id="s-prevh"></tr>
+        </thead>
+        <tbody id="s-prevb"></tbody>
+      </table>
+      <div class="row">
+        <button id="s-save">Salva setup</button>
+        <button id="s-export">Export stato</button>
+        <label class="filebtn">Import stato <input type="file" id="s-import" accept=".json" hidden></label>
+        <button id="s-reset" class="danger">Azzera asta</button>
+      </div>
+    </section>
+  </main>
+  <script src="app.js"></script>
 </body>
+
 </html>
