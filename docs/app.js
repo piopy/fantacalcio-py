@@ -264,8 +264,33 @@ function assign(n, t, p) { state.hist.push({ op: 'assign', n, prev: state.assign
 function unassign(n) { state.hist.push({ op: 'unassign', n, prev: state.assigned[n] || null }); delete state.assigned[n]; save(); }
 
 // ---------- squadre ----------
+let sumSort = { col: 2, dir: 1 };
+const SUMCOLS = [
+  { l: 'Squadra', f: t => t.name, n: false },
+  { l: 'Speso', f: t => t.spent, n: true },
+  { l: 'Residuo', f: t => t.left, n: true },
+  { l: 'Max off.', f: t => t.maxBid, n: true },
+  { l: 'Gioc.', f: t => t.ros.length, n: true },
+];
+function renderSum(ts) {
+  $('sumhead').innerHTML = SUMCOLS.map((c, i) =>
+    `<th${c.n ? ' class="num"' : ''} data-i="${i}">${c.l}${sumSort.col === i ? (sumSort.dir === 1 ? ' ▲' : ' ▼') : ''}</th>`).join('');
+  $('sumhead').querySelectorAll('th').forEach(th => th.onclick = () => {
+    const i = +th.dataset.i;
+    sumSort = sumSort.col === i ? { col: i, dir: -sumSort.dir } : { col: i, dir: 1 };
+    renderTeams();
+  });
+  const rows = ts.slice().sort((a, b) => {
+    const x = SUMCOLS[sumSort.col].f(a), y = SUMCOLS[sumSort.col].f(b);
+    return (typeof x === 'number' ? x - y : String(x).localeCompare(String(y))) * sumSort.dir;
+  });
+  $('sumbody').innerHTML = rows.map(t =>
+    `<tr${t.i === state.setup.mine ? ' class="star"' : ''}><td><b>${esc(t.name)}</b></td>
+    <td class="num">${t.spent}</td><td class="num"><b>${t.left}</b></td><td class="num">${t.maxBid}</td><td class="num">${t.ros.length}</td></tr>`).join('');
+}
 function renderTeams() {
   const ts = teamStats(), me = ts[state.setup.mine] || ts[0];
+  renderSum(ts);
   const slotHtml = t => ROLES.map(r => `${r} ${t.per[r].length}/${state.setup.slots[r] || 0}`).join(' · ');
   const rosHtml = (t, removable) => {
     const items = [];
@@ -322,10 +347,25 @@ function renderCols() {
 }
 
 // ---------- infortunati ----------
+// sortIdx: 0=Giocatore 1=R 2=Squadra 3=Dettaglio 4=Stato ; dir 1/-1
+let infSort = { col: 2, dir: 1 };
+const INFCOLS = [
+  r => String(r['Calciatore']),
+  r => String(roleOf(r['Ruolo'])),
+  r => String(r[TEAMCOL]),
+  r => String(r['Dettaglio infortunio'] || 'infortunato'),
+  r => state.assigned[r['Calciatore']] ? state.setup.teams[state.assigned[r['Calciatore']].t] : 'libero',
+];
 function renderInf() {
-  const rows = DATA.filter(r => r['Dettaglio infortunio'] || isTrue(r['Infortunato']))
-    .sort((a, b) => String(a['Calciatore']).localeCompare(String(b['Calciatore'])));
-  $('infcount').textContent = rows.length + ' indisponibili';
+  const rows = DATA.filter(r => r['Dettaglio infortunio'] || isTrue(r['Infortunato']));
+  const fns = INFCOLS;
+  rows.sort((a, b) => infSort.dir * String(fns[infSort.col](a)).localeCompare(String(fns[infSort.col](b)), 'it'));
+  document.querySelectorAll('#inftbl th[data-s]').forEach(th => {
+    const i = +th.dataset.s;
+    th.textContent = th.textContent.replace(/ [▲▼]/, '') + (infSort.col === i ? (infSort.dir === 1 ? ' ▲' : ' ▼') : '');
+    th.onclick = () => { infSort = infSort.col === i ? { col: i, dir: -infSort.dir } : { col: i, dir: 1 }; renderInf(); };
+  });
+  $('infcount').textContent = rows.length + ' indisponibili — click su intestazione per ordinare';
   $('infbody').innerHTML = rows.map(r => {
     const n = r['Calciatore'], a = state.assigned[n];
     return `<tr${a ? ' class="taken"' : ''}><td><b>${esc(n)}</b></td><td>${esc(roleOf(r['Ruolo']))}</td>
