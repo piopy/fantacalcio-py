@@ -1,4 +1,5 @@
 import difflib, pandas as pd
+from src.utils import norm
 
 
 def _best_match(name, candidates, cutoff=0.70):
@@ -13,13 +14,18 @@ def _best_match(name, candidates, cutoff=0.70):
     return rev[m[0]] if m else None
 
 
-def merge(fp, u_prev, u_curr, ext=None):
+def merge(fp, u_prev, u_curr, ext=None, inf=None):
     d_prev = {r["norm"]: r for _, r in u_prev.iterrows()}
     d_curr = {r["norm"]: r for _, r in u_curr.iterrows()}
     d_ext = {r["norm"]: r for _, r in ext.iterrows()} if ext is not None and not ext.empty else {}
     cand_prev = list(d_prev.keys())
     cand_curr = list(d_curr.keys())
     cand_ext = list(d_ext.keys())
+    d_inf = {}
+    for sq in inf or []:
+        for v in sq.get("voci", []):
+            d_inf[norm(v["nome"])] = v["dettaglio"]
+    cand_inf = list(d_inf.keys())
     rows = []
     for _, r in fp.iterrows():
         n = r["norm"]
@@ -57,5 +63,10 @@ def merge(fp, u_prev, u_curr, ext=None):
         rec["ext_mv"] = me["mv"] if me is not None and pd.notna(me.get("mv")) else None
         rec["ext_xg"] = me["ext_xg"] if me is not None else 0
         rec["ext_clean"] = me["ext_clean"] if me is not None else 0
+        det = d_inf.get(n)
+        if det is None and cand_inf:
+            bm = _best_match(n, cand_inf)
+            det = d_inf.get(bm) if bm else None
+        rec["Dettaglio_infortunio"] = det or ""
         rows.append(rec)
     return pd.DataFrame(rows)

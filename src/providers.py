@@ -1,4 +1,5 @@
-import os, json, socket, requests, pandas as pd
+import os, json, re, socket, requests, pandas as pd
+from bs4 import BeautifulSoup
 from src import config
 from src.fpd import scrape_fpd
 from src.utils import norm
@@ -130,3 +131,68 @@ def fetch_provider_stats():
     df["norm"] = df["display_name"].map(norm)
     df["ext_fanta"] = df.get("fanta_index")
     return df
+
+
+INF_URL = "https://www.fantacalciopedia.com/articoli-fcp/consigli-fantacalcio/75-lista-infortunati-serie-a-aggiornata.html"
+
+
+def fetch_infortunati():
+    """Articolo infortunati -> [{squadra, voci:[{nome, dettaglio}]}]. Cache data/infortunati.json"""
+    cache = "data/infortunati.json"
+    if os.path.exists(cache):
+        return json.load(open(cache))
+    s = BeautifulSoup(requests.get(INF_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20).content, "html.parser")
+    for bad in s(["script", "style", "nav", "footer", "header", "form"]):
+        bad.decompose()
+    lines = [l for l in s.get_text("\n", strip=True).split("\n") if l]
+    out, cur, i = [], None, 0
+    while i < len(lines):
+        m = re.match(r"Lista infortunati (.+)", lines[i])
+        if m and "Serie A aggiornata" not in m.group(1):
+            cur = {"squadra": m.group(1), "voci": []}
+            out.append(cur)
+        elif cur and lines[i].startswith(": ") and i > 0 and not lines[i - 1].startswith(("Lista ", "Squalificati")):
+            cur["voci"].append({"nome": lines[i - 1], "dettaglio": lines[i][2:]})
+        i += 1
+    json.dump(out, open(cache, "w"), ensure_ascii=False)
+    print(f"[infortunati] {len(out)} squadre, {sum(len(s['voci']) for s in out)} voci")
+    return out
+
+
+def fetch_rose(anno):
+    """Rose Serie A -> [{squadra, modulo, formazione[], rigoristi[], migliori[]}]. Cache data/rose_<anno>.json"""
+    cache = f"data/rose_{anno}.json"
+    if os.path.exists(cache):
+        return json.load(open(cache))
+    h = {"User-Agent": "Mozilla/5.0"}
+    idx = BeautifulSoup(requests.get("https://www.fantacalciopedia.com/rose-serie-a/", headers=h, timeout=20).content, "html.parser")
+    teams = []
+    for a in idx.find_all("a", href=re.compile(r"/rose-serie-a/\d+/\w+")):
+        if a["href"] not in [t[1] for t in teams]:
+            teams.append((a.get_text(" ", strip=True)[:30], a["href"]))
+    out = []
+    for name, href in teams:
+        try:
+            s = BeautifulSoup(requests.get(href, headers=h, timeout=20).content, "html.parser")
+            d = {"squadra": name, "url": href, "modulo": None, "formazione": [], "rigoristi": [], "migliori": []}
+            m = re.search(r"Il modulo principale:\s*([\d-]+)", s.get_text(" ", strip=True))
+            d["modulo"] = m.group(1) if m else None
+            mod = s.select_one("div.row.modulo")
+            if mod:
+                d["formazione"] = [p.get_text(strip=True) for p in mod.select("p.label") if p.get_text(strip=True)]
+            for key, words in (("rigoristi", ["rigorist"]), ("migliori", ["migliori"])):
+                hh = [t for t in s.find_all(["h2", "h3"]) if any(w in t.get_text().lower() for w in words)]
+                if hh:
+                    box = hh[0].find_parent("div")
+                    while box and len(box.find_all("a")) < 1:
+                        box = box.parent
+                    for a in box.find_all("a", href=re.compile(r"/lista-calciatori-serie-a/\w+/\d+/")):
+                        t = a.get_text(" ", strip=True)
+                        if t and t not in d[key]:
+                            d[key].append(t[:60])
+            out.append(d)
+        except Exception as e:
+            print(f"[rose] skip {href}: {e}")
+    json.dump(out, open(cache, "w"), ensure_ascii=False)
+    print(f"[rose] {len(out)} squadre")
+    return out

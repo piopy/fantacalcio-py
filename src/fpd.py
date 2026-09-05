@@ -1,6 +1,8 @@
 # fpd.py — scraping FPD (nuovo main). Ex data_retriever.py senza FSTATS morto.
 import os
+import re
 import time
+from datetime import date
 from random import randint
 import requests
 from bs4 import BeautifulSoup
@@ -57,9 +59,9 @@ def get_giocatori_urls(force=True) -> list:
 def get_attributi_giocatore(url: str) -> dict:
     """Scrapes a single player's page on FPD for their attributes."""
     logger.debug(f"Scraping attributes for player from URL: {url}")
-    time.sleep(randint(100, 600) / 1000)
+    time.sleep(randint(1200, 3000) / 1000)  # throttle anti-ban: ~2s medi per request
     attributi = dict()
-    html = requests.get(url.strip())
+    html = requests.get(url.strip(), headers=config.HEADERS)
     soup = BeautifulSoup(html.content, "html.parser")
 
     attributi["Nome"] = soup.select_one("h1").get_text().strip()
@@ -155,6 +157,68 @@ def get_attributi_giocatore(url: str) -> dict:
     selettore = "div.col_one_fourth:nth-of-type(2) span.rouge"
     presenze_attuali = soup.select_one(selettore).text
     attributi["Presenze campionato corrente"] = presenze_attuali
+
+    txt_all = soup.get_text("\n", strip=True)
+
+    # anagrafica: età + nazionalità (utile es. Coppa d'Africa)
+    attributi["Eta"] = ""
+    attributi["Nazionalita"] = ""
+    m = re.search(r"Data nascita:\s*(\d{2})-(\d{2})-(\d{4})", txt_all)
+    if m:
+        try:
+            born = date(int(m.group(3)), int(m.group(2)), int(m.group(1)))
+            today = date.today()
+            attributi["Eta"] = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+        except ValueError:
+            pass
+    m = re.search(r"Nazionalit.:\s*([A-Za-z ]+)", txt_all)
+    if m:
+        attributi["Nazionalita"] = m.group(1).strip()
+
+    # consiglio editoriale più recente + stagione di riferimento
+    attributi["Consiglio_anno"] = ""
+    attributi["Consiglio_testo"] = ""
+    cons = soup.select(".mc_hookEvolution p")
+    if cons:
+        label = cons[0].find("strong")
+        label_txt = label.get_text(strip=True) if label else ""
+        attributi["Consiglio_anno"] = label_txt
+        attributi["Consiglio_testo"] = cons[0].get_text(" ", strip=True)[:800]
+        if not re.search(r"(19|20)\d{2}", label_txt):
+            y = re.search(r"(19|20)\d{2}", attributi["Consiglio_testo"])
+            if y:
+                attributi["Consiglio_anno"] = f"{label_txt} {y.group(0)}".strip()
+
+    # forma ultime gare (chart FantaVoto embedded)
+    attributi["Forma_serie"] = ""
+    attributi["Forma_media"] = ""
+    html = str(soup)
+    i = html.find("chartjs-0")
+    if i > 0:
+        win = html[i:i + 1500]
+        md = re.search(r"datasets.*?data.*?\[(.*?)\]", win, re.S)
+        if md:
+            try:
+                voti = [float(x) for x in md.group(1).split(",") if x.strip()]
+                if voti:
+                    attributi["Forma_serie"] = "|".join(str(v) for v in voti)
+                    attributi["Forma_media"] = round(sum(voti) / len(voti), 2)
+            except ValueError:
+                pass
+
+    # simili in reparto (nomi; punteggio nostro a carico frontend/merge)
+    attributi["Simili"] = ""
+    sim = [t for t in soup.find_all("h2") if "simili" in t.get_text().lower()]
+    if sim:
+        box = sim[0].find_parent("div")
+        while box and len(box.find_all("a")) < 2:
+            box = box.parent
+        nomi = []
+        for a in box.find_all("a", href=re.compile(r"/lista-calciatori-serie-a/\w+/\d+/")):
+            t = a.get_text(" ", strip=True)
+            if t:
+                nomi.append(t[:60])
+        attributi["Simili"] = "|".join(dict.fromkeys(nomi))
 
     return attributi
 

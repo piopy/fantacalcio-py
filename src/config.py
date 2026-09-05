@@ -19,7 +19,7 @@ FPD_URL = f"{BASEURL_FPD}/lista-calciatori-serie-a/"
 
 # Scraping
 RUOLI = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]
-MAX_WORKERS = 10
+MAX_WORKERS = 5  # basso per non farsi bannare da FPD (con ~2s sleep/pagina: full scrape ~4min)
 HEADERS = {
     "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36"
 }
