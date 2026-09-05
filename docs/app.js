@@ -330,6 +330,34 @@ function renderSetup() {
   renderCols();
 }
 
+function renderOrder() {
+  const box = $('s-order');
+  const cols = visibleCols();
+  box.innerHTML = cols.map((c, i) =>
+    `<div class="row ord" draggable="true" data-oi="${i}"><span>☰ ${esc(shortLbl(c))}</span>
+    <button data-mv="${i}:-1"${i === 0 ? ' disabled' : ''}>↑</button>
+    <button data-mv="${i}:1"${i === cols.length - 1 ? ' disabled' : ''}>↓</button></div>`).join('');
+  let drag = null;
+  box.querySelectorAll('.ord').forEach(el => {
+    el.ondragstart = e => { drag = +el.dataset.oi; el.style.opacity = '.4'; };
+    el.ondragend = () => { el.style.opacity = ''; };
+    el.ondragover = e => e.preventDefault();
+    el.ondrop = e => {
+      e.preventDefault();
+      const arr = visibleCols(), to = +el.dataset.oi;
+      const [m] = arr.splice(drag, 1);
+      arr.splice(to, 0, m);
+      state.cols = arr; save(); renderCols(); renderList();
+    };
+  });
+  box.querySelectorAll('[data-mv]').forEach(b => b.onclick = () => {
+    const [i, d] = b.dataset.mv.split(':').map(Number);
+    const arr = visibleCols(), j = i + d;
+    [arr[i], arr[j]] = [arr[j], arr[i]];
+    state.cols = arr; save(); renderCols(); renderList();
+  });
+}
+
 function renderCols() {
   const box = $('s-cols');
   if (!DATA.length) { box.innerHTML = '<i>Carica prima il JSON dal Listone per configurare le colonne.</i>'; $('s-prevh').innerHTML = ''; $('s-prevb').innerHTML = ''; return; }
@@ -337,10 +365,13 @@ function renderCols() {
   const alpha = HEADERS.slice().sort((a, b) => String(a).localeCompare(String(b), 'it'));
   box.innerHTML = alpha.map(h => `<label><input type="checkbox" data-col="${esc(h)}"${vis.has(h) ? ' checked' : ''}> ${esc(shortLbl(h))}</label>`).join('');
   box.querySelectorAll('[data-col]').forEach(cb => cb.onchange = () => {
-    const sel = [...box.querySelectorAll('[data-col]:checked')].map(x => x.dataset.col);
-    state.cols = HEADERS.filter(h => sel.includes(h));
+    const sel = new Set([...box.querySelectorAll('[data-col]:checked')].map(x => x.dataset.col));
+    const kept = (state.cols || []).filter(h => sel.has(h) && HEADERS.includes(h));
+    state.cols = kept.concat(HEADERS.filter(h => sel.has(h) && !kept.includes(h)));
+    if (!state.cols.length) state.cols = null;
     save(); renderCols(); renderList();
   });
+  renderOrder();
   const cols = visibleCols();
   $('s-prevh').innerHTML = cols.map(c => `<th>${esc(shortLbl(c))}</th>`).join('');
   $('s-prevb').innerHTML = DATA.slice(0, 3).map(r =>
