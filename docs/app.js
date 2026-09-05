@@ -116,6 +116,10 @@ function renderList() {
   $('count').textContent = rows.length + ' / ' + DATA.length + ' giocatori';
   const tb = $('tbody');
   tb.innerHTML = '';
+  if (!DATA.length) {
+    tb.innerHTML = '<tr><td class="empty">Nessun dato. Carica il JSON unico dal pulsante in alto.</td></tr>';
+    return;
+  }
   const frag = document.createDocumentFragment();
   rows.slice(0, 500).forEach(r => {
     const n = r['Calciatore'], a = state.assigned[n], star = state.stars.includes(n), shop = state.shop[n];
@@ -230,7 +234,7 @@ function detailHtml(r) {
       <button id="as-go">${a ? 'Riassegna' : 'Assegna'}</button>
       ${a ? '<button id="as-rm">Svincola</button>' : ''}
     </div>
-    ${shop ? `<div class="row">📝 target <input id="sh-target" type="number" min="0" value="${esc(shop.target || '')}" style="width:70px">
+    ${shop ? `<div class="row"><span class="chip">Nota</span><input id="sh-target" type="number" min="0" value="${esc(shop.target || '')}" style="width:70px">
       <input id="sh-note" value="${esc(shop.note || '')}" placeholder="nota…" style="flex:1;min-width:120px">
       <button id="sh-save">Salva</button><button id="sh-rm">Togli</button></div>`
     : `<div class="row"><button id="sh-add">+ Lista spesa</button></div>`}`;
@@ -303,7 +307,7 @@ function renderTeams() {
   const need = ROLES.filter(r => me.per[r].length < (+state.setup.slots[r] || 0));
   const alerts = need.map(r => {
     const who = ts.filter(t => t.i !== me.i && t.per[r].length < (+state.setup.slots[r] || 0)).map(t => esc(t.name)).join(', ');
-    return who ? `<div>⚠️ ${r}: cercano anche ${who}</div>` : '';
+    return who ? `<div><b class="down">Allerta ${r}:</b> cercano anche ${who}</div>` : '';
   }).join('');
   $('opps').innerHTML = alerts + ts.filter(t => t.i !== me.i).map(t =>
     `<div class="card"><b>${esc(t.name)}</b> — residuo ${t.left}, speso ${t.spent}, max ${t.maxBid}<br>${slotHtml(t)}${rosHtml(t, true)}</div>`
@@ -468,12 +472,21 @@ function readFile(file, cb) {
   const rd = new FileReader();
   rd.onload = () => {
     try { loadJson(JSON.parse(rd.result)); }
-    catch (e) { alert('JSON non valido: serve sidecar pipeline {players, rose}'); }
+    catch (e) { $('filestatus').textContent = 'file non valido: serve il JSON unico pipeline'; }
   };
   rd.readAsText(file);
 }
 
 function init() {
+  const theme = localStorage.getItem('fanta-theme') || 'light';
+  document.documentElement.dataset.theme = theme;
+  $('theme').textContent = theme === 'light' ? '☾' : '☀';
+  $('theme').onclick = () => {
+    const next = document.documentElement.dataset.theme === 'light' ? 'dark' : 'light';
+    document.documentElement.dataset.theme = next;
+    localStorage.setItem('fanta-theme', next);
+    $('theme').textContent = next === 'light' ? '☾' : '☀';
+  };
   state = load();
   fetch('config.json').then(r => r.json()).then(cfg => { if (!state) { state = blankState(cfg); save(); } renderSetup(); })
     .catch(() => { if (!state) { state = blankState(BUILTIN); save(); } renderSetup(); });
@@ -529,7 +542,7 @@ function init() {
   $('s-import').onchange = e => {
     const f = e.target.files[0]; if (!f) return;
     const rd = new FileReader();
-    rd.onload = () => { try { state = JSON.parse(rd.result); save(); renderAll(); } catch (err) { alert('Stato non valido'); } };
+    rd.onload = () => { try { state = JSON.parse(rd.result); save(); renderAll(); } catch (err) { $('filestatus').textContent = 'stato non valido'; } };
     rd.readAsText(f);
   };
   $('s-reset').onclick = () => { if (confirm('Azzera assegnazioni?')) { state.assigned = {}; state.hist = []; save(); renderAll(); } };
