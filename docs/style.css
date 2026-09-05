@@ -50,5 +50,6 @@ button.danger { background: var(--bad); color: #fff; }
 .chip { display: inline-block; background: var(--line); border-radius: 10px; padding: 1px 9px; margin: 1px 3px 1px 0; font-size: 12px; }
 .bar { display: inline-block; width: 90px; height: 8px; background: var(--line); border-radius: 4px; vertical-align: middle; }
 .bar i { display: block; height: 100%; background: var(--acc); border-radius: 4px; }
-#s-cols { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 2px 10px; margin: 6px 0; }
+#s-cols { columns: 180px; margin: 6px 0; }
+#s-cols label { display: block; break-inside: avoid; }
 #s-prev { margin-top: 6px; }

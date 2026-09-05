@@ -334,7 +334,8 @@ function renderCols() {
   const box = $('s-cols');
   if (!DATA.length) { box.innerHTML = '<i>Carica prima il JSON dal Listone per configurare le colonne.</i>'; $('s-prevh').innerHTML = ''; $('s-prevb').innerHTML = ''; return; }
   const vis = new Set(visibleCols());
-  box.innerHTML = HEADERS.map(h => `<label><input type="checkbox" data-col="${esc(h)}"${vis.has(h) ? ' checked' : ''}> ${esc(shortLbl(h))}</label>`).join('');
+  const alpha = HEADERS.slice().sort((a, b) => String(a).localeCompare(String(b), 'it'));
+  box.innerHTML = alpha.map(h => `<label><input type="checkbox" data-col="${esc(h)}"${vis.has(h) ? ' checked' : ''}> ${esc(shortLbl(h))}</label>`).join('');
   box.querySelectorAll('[data-col]').forEach(cb => cb.onchange = () => {
     const sel = [...box.querySelectorAll('[data-col]:checked')].map(x => x.dataset.col);
     state.cols = HEADERS.filter(h => sel.includes(h));
