@@ -103,3 +103,6 @@ Thumbs.db
 *~
 *.txt
 
+# GitHub Pages: frontend in docs/ va pubblicato (config inclusa)
+!docs/*.json
+

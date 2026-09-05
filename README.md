@@ -70,7 +70,7 @@ Colonne annate dinamiche da `--anno`: `Gol 25-26` = stagione scorsa, `Gol 26-27`
 
 ## Frontend asta (offline)
 
-Apri `src/frontend/index.html` nel browser, carica il `.json` (e il `rose_*.json` per la tab Serie A).
+Apri `docs/index.html` nel browser (o la GitHub Page con sorgente `/docs`), carica il `.json` (e il `rose_*.json` per la tab Serie A).
 Listone filtrabile/ordinabile, assegnazioni con budget per squadra, stelline, lista spesa con note, tab Infortunati.
 
 Legacy congelata: `cli.py` (verrà sostituita da TUI).
