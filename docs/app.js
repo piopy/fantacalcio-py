@@ -75,7 +75,7 @@ const visibleCols = () => {
   const v = (state.cols || []).filter(c => HEADERS.includes(c));
   return v.length ? v : DEFAULT_COLS();
 };
-const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Affare FPY': 'Aff.', 'Score FPY': 'Score', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Dettaglio infortunio': 'Dettaglio inf.', 'Consiglio rif.': 'Rif.', 'Nazionalità': 'Naz.', 'Forma media': 'Forma', 'Forma serie': 'Serie', 'Fonte Value': 'Fonte' };
+const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Affare FPY': 'Affare', 'Score FPY': 'Score', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Dettaglio infortunio': 'Dettaglio inf.', 'Consiglio rif.': 'Rif.', 'Nazionalità': 'Naz.', 'Forma media': 'Forma', 'Forma serie': 'Serie', 'Fonte Value': 'Fonte' };
 const shortLbl = c => SHORT[c] || (c === TEAMCOL ? 'Squadra' : (/^Prezzo_/.test(c) ? 'Prz' : c));
 
 function filtered() {
@@ -393,6 +393,47 @@ function renderCols() {
     `<tr>${cols.map(c => `<td>${esc(r[c])}</td>`).join('')}</tr>`).join('');
 }
 
+// ---------- expander significati colonne ----------
+const COLHELP = {
+  'Calciatore': 'Nome giocatore.',
+  'Ruolo': 'P=portiere, D=difensore, C=centrocampista, A=attaccante.',
+  'Affare FPY': 'Indice ufficiale 0–100: resa attesa per credito speso. Alto = paghi poco per tanto.',
+  'Score FPY': 'Vecchia pagella 1–99: solo bravura, ignora prezzo.',
+  'Fonte Value': 'listone = prezzo reale pre-asta; interno = stimato (meno affidabile); nodata = esordiente.',
+  'Hidden Gem?': 'SÌ = numeri avanzati sopra prezzo, possibile sorpresa.',
+  'Motivo': 'Perché è gem (es. xG non trasformati).',
+  'Alternative Affini': 'Sostituti simili per ruolo e punteggio.',
+  'Fantamedia Prev': 'Fantamedia stagione scorsa.',
+  'Fantamedia Live': 'Fantamedia stagione in corso.',
+  'Skills': 'Etichette redazione (Rigorista, Titolare, …).',
+  'Infortunato': 'Fuori ora sì/no.',
+  'Dettaglio infortunio': 'Tipo e rientro previsto.',
+  'Trend': 'UP/DOWN di forma.',
+  'Consigliato': 'Consigliato prossima giornata.',
+  'Buon invest.': 'Buon investimento lungo periodo.',
+  'Resist. infort.': 'Storico tenuta fisica.',
+  'Gol prev.': 'Gol previsti redazione.',
+  'Assist prev.': 'Assist previsti redazione.',
+  'Età': 'Anni.',
+  'Nazionalità': 'Paese.',
+  'Consiglio rif.': 'Anno consiglio redazione.',
+  'Consiglio': 'Testo consiglio redazione.',
+  'Forma serie': 'Voti ultime gare.',
+  'Forma media': 'Media voti recenti.',
+  'Simili': 'Giocatori simili in rosa.',
+  'Indice Esterno': 'Indice provider esterno.',
+  'Titolarità': '% probabilità titolare.',
+  'Continuità': 'Continuità rendimento.',
+  'MV Fonte Est.': 'Media voto provider esterno.'
+};
+const colHelp = c => COLHELP[c] || (/^Prezzo_/.test(c) ? 'Prezzo stimato asta in crediti.' : (/^Pres /.test(c) ? 'Presenze stagione.' : (/^(Gol|xG|Assist|xA) /.test(c) ? 'Statistica stagione indicata.' : '—')));
+
+function renderColHelp() {
+  const box = $('colhelp');
+  if (!box || !DATA.length) { if (box) box.innerHTML = ''; return; }
+  box.innerHTML = HEADERS.map(h => `<div><b>${esc(shortLbl(h))}</b> <span>${esc(colHelp(h))}</span></div>`).join('');
+}
+
 // ---------- infortunati ----------
 // sortIdx: 0=Giocatore 1=R 2=Squadra 3=Dettaglio 4=Stato ; dir 1/-1
 let infSort = { col: 2, dir: 1 };
@@ -469,7 +510,7 @@ function exportState() {
   a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], { type: 'application/json' }));
   a.download = 'asta-stato.json'; a.click();
 }
-function renderAll() { renderList(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
+function renderAll() { renderList(); renderColHelp(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
 
 function loadJson(j) {
   const rows = Array.isArray(j) ? j : j.players || j.records || j.data || j.rows;

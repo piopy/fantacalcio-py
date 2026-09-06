@@ -112,6 +112,11 @@ button.danger { background: var(--bad-bg); border-color: var(--bad-bg); color: v
 .bar i { display: block; height: 100%; background: var(--gold); border-radius: 4px; }
 #s-cols { columns: 180px; margin: 6px 0; }
 #s-cols label { display: block; break-inside: avoid; color: var(--mut); }
+#colexp { margin: 6px 0; font-size: 13px; }
+#colexp summary { cursor: pointer; color: var(--mut); }
+#colhelp { columns: 260px; margin-top: 4px; }
+#colhelp div { break-inside: avoid; padding: 1px 0; }
+#colhelp span { color: var(--mut); font-size: 12px; }
 #s-prev { margin-top: 6px; }
 .roster { margin: 4px 0 4px 16px; padding: 0; }
 .roster li { margin: 2px 0; }
