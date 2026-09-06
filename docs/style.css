@@ -82,7 +82,9 @@ tr.shop td { background: var(--hover); }
 .badge.inj { background: var(--bad-bg); color: var(--bad); }
 .card { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 24px; margin-bottom: 12px; }
 .row { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 6px 0; }
-.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; }
+.grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
+.grid label { display: flex; flex-direction: column; gap: 2px; }
+.grid input { width: 100%; }
 input, select {
   background: var(--card); color: var(--fg); border: 1px solid var(--line);
   border-radius: 6px; padding: 6px 8px; font-size: 13.5px;
