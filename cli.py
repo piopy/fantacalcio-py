@@ -87,11 +87,11 @@ def cmd_inspect():
         rows = [r for r in rows if squadra in str(r.get("Squadra Attuale (2026-2027)", r.get("Squadra", ""))).lower()]
     price = next((k for k in (rows[0] if rows else {}) if k.startswith("Prezzo_")), "")
     t = Table(title=f"{os.path.basename(path)} — {len(rows)} gioc", show_header=True)
-    for c in ["Calciatore", "Ruolo", "Punteggio Asta (/100)", price, "Gol 25-26", "xG 25-26"]:
+    for c in ["Calciatore", "Ruolo", "Affare FPY", price, "Gol 25-26", "xG 25-26"]:
         if c:
             t.add_column(c)
     for r in rows[:top]:
-        t.add_row(*[str(r.get(c, "—")) for c in ["Calciatore", "Ruolo", "Punteggio Asta (/100)", price, "Gol 25-26", "xG 25-26"] if c])
+        t.add_row(*[str(r.get(c, "—")) for c in ["Calciatore", "Ruolo", "Affare FPY", price, "Gol 25-26", "xG 25-26"] if c])
     console.print(t)
 
 

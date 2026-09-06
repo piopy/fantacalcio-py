@@ -55,7 +55,23 @@ Entrypoint: `pipeline.py` (punteggio asta /100, prezzi per crediti, Hidden Gem, 
 uv run pipeline.py --anno 2026 --partecipanti 10 --crediti 500
 uv run pipeline.py --no-ext    # senza provider esterno
 uv run pipeline.py --force     # re-scrape FPD (~60s)
+uv run pipeline.py --listone Quotazioni_Fantacalcio_Stagione_2026_27.xlsx  # Affare con prezzi reali
 ```
+
+## Indici: Affare FPY (ufficiale) e Score FPY (legacy)
+
+**Affare FPY** (0–100, normalizzato sul max) = qualità-prezzo: trova titolari continui a basso costo invece di replicare l'hype.
+
+```text
+Affare = 100 × (Fm × (Pres/38)^1.5 − (Amm×0.4 + Esp×1.5)/Pres) / log1p(prezzo) × (1 + 0.5 × continuità) / max
+```
+
+- `Fm`/`Pres` = fantamedia e presenze stagione scorsa; esponente 1.5 = premio a chi gioca sempre ("lunga corsa" 38 giornate).
+- `prezzo` = `Qt.A` del listone se passi `--listone`, altrimenti prezzo interno calcolato (meno accurato: avviso a console, colonna `Fonte Value` = `listone`/`interno`).
+- Backtest 2025-26 (343 giocatori): top30 Affare → 21.5 punti/credito a ~6cr medi; top30 hype → 10.3 a ~22cr. Affare non trova le stelle, trova chi le affianca a un terzo del prezzo.
+- Limiti: senza listone il denominatore è circolare (prezzo derivato dallo score); distribuzione bonus per giornata non misurata (solo aggregati stagionali).
+
+**Score FPY** = vecchio `Punteggio_Asta_100` (base + fm + xG/xA + skills − disciplina + team_mult, 1–99). Tenuto per confronto; Hidden Gem e Alternative usano ancora lui.
 
 ## Output
 

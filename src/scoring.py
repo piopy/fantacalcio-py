@@ -1,8 +1,68 @@
+import math
 import pandas as pd
+from src.merge import _best_match
 from src.providers import get_tier_weights
 from src.utils import norm, parse_skills, clip
 
 SKILLS_BONUS = {"Rigorista": 4.5, "Goleador": 3.5, "Titolare": 3.0, "Buona Media": 2.5, "Piazzati": 2.5, "Assistman": 2.5, "Fuoriclasse": 2.5, "Giovane talento": 1.5, "Outsider": 1.5, "Panchinaro": -4.0, "Falloso": -2.0}
+
+
+def price_for(sc, ruolo, part_mult, cred_mult):
+    diff = max(0.0, sc - 45.0)
+    if ruolo in ["ATT", "A"]:
+        return int(clip((diff ** 1.6) / 6.0 * part_mult * cred_mult, 1, 190 * cred_mult))
+    if ruolo in ["CEN", "C", "TRE", "T"]:
+        return int(clip((diff ** 1.5) / 9.0 * part_mult * cred_mult, 1, 85 * cred_mult))
+    if ruolo in ["DIF", "D"]:
+        return int(clip((diff ** 1.4) / 12.0 * part_mult * cred_mult, 1, 45 * cred_mult))
+    return int(clip((diff ** 1.3) / 14.0 * part_mult * cred_mult, 1, 40 * cred_mult))
+
+
+def value_df(df, anno, list_prices=None):
+    """Indice Value ufficiale (qualita-prezzo): backtest 2025-26 ~2x punti/credito vs hype.
+    list_prices: dict norm(nome)->Qt.A listone pre-asta. Senza listone usa Prezzo interno (meno accurato)."""
+    col_prev = f"Fantamedia anno {anno - 1}-{anno}"
+    col_curr = f"Fantamedia anno {anno}-{anno + 1}"
+    cred_col = next((c for c in df.columns if c.startswith("Prezzo_")), None)
+    cand = list((list_prices or {}).keys())
+    vals, srcs = [], []
+    for _, r in df.iterrows():
+        fm_prev = pd.to_numeric(r.get(col_prev), errors="coerce") or 0
+        fm_curr = pd.to_numeric(r.get(col_curr), errors="coerce") or 0
+        games = pd.to_numeric(r.get("up_games"), errors="coerce") or 0
+        fm_known = fm_prev > 0 or fm_curr > 0
+        nodata = games <= 0
+        if not fm_known:
+            pt = pd.to_numeric(r.get("Punteggio"), errors="coerce") or 60
+            fm_ref = pt / 10.0  # qualita stimata da FP se fantamedia assente
+        else:
+            fm_ref = fm_prev if fm_prev > 0 else fm_curr
+        avail = games / 38.0 if games > 0 else 20.0 / 38.0
+        base = fm_ref * avail ** 1.5 - (r.get("up_y", 0) * 0.4 + r.get("up_r", 0) * 1.5) / max(games, 1)
+        if fm_known and fm_ref < 5.5:
+            base *= max(0.0, fm_ref - 4.5)  # floor: scarsi sempre in campo restano scarsi
+        if not nodata and games < 8:
+            base *= games / 8.0  # rampa anti una-presenza/terzi portieri
+        key = norm(str(r.get("Nome", "")))
+        price, src = None, "interno"
+        if list_prices and list_prices.get(key, 0) > 0:
+            price, src = list_prices[key], "listone"
+        elif list_prices and cand:
+            bm = _best_match(key, cand)
+            if bm and list_prices.get(bm, 0) > 0:
+                price, src = list_prices[bm], "listone"
+        if price is None and cred_col:
+            price = pd.to_numeric(r.get(cred_col), errors="coerce") or 1
+        price = max(price or 1, 1)
+        cont = pd.to_numeric(r.get("ext_cont"), errors="coerce")
+        factor = 1 + 0.5 * (cont / 100.0) if pd.notna(cont) and not nodata else 1.0
+        vals.append(round(max(base, 0) / math.log1p(price) * factor, 1))
+        srcs.append("nodata" if nodata else src)
+    df["Value"] = vals
+    df["Value_src"] = srcs
+    mx = max(vals) or 1
+    df["Affare"] = [round(v / mx * 100, 1) for v in vals]
+    return df
 
 
 def score_df(df, anno, partecipanti, crediti):
@@ -69,15 +129,7 @@ def score_df(df, anno, partecipanti, crediti):
             raw *= mult
         sc = round(clip(raw, 1, 99), 1)
         scores.append(sc)
-        diff = max(0.0, sc - 45.0)
-        if ruolo in ["ATT", "A"]:
-            pr = int(clip((diff ** 1.6) / 6.0 * part_mult * cred_mult, 1, 190 * cred_mult))
-        elif ruolo in ["CEN", "C", "TRE", "T"]:
-            pr = int(clip((diff ** 1.5) / 9.0 * part_mult * cred_mult, 1, 85 * cred_mult))
-        elif ruolo in ["DIF", "D"]:
-            pr = int(clip((diff ** 1.4) / 12.0 * part_mult * cred_mult, 1, 45 * cred_mult))
-        else:
-            pr = int(clip((diff ** 1.3) / 14.0 * part_mult * cred_mult, 1, 40 * cred_mult))
+        pr = price_for(sc, ruolo, part_mult, cred_mult)
         prezzi.append(pr)
         rs = []
         if xg - g >= 2:

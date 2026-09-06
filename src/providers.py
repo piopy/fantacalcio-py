@@ -101,6 +101,19 @@ def load_fp(force=False):
     return df
 
 
+def load_listone(path):
+    """Listone xlsx pre-asta (sheet Tutti, header riga 2) -> dict norm(nome)->Qt.A."""
+    df = pd.read_excel(path, sheet_name="Tutti", header=1)
+    df.columns = [str(c).strip() for c in df.columns]
+    out = {}
+    for _, r in df.iterrows():
+        q = pd.to_numeric(r.get("Qt.A"), errors="coerce") or 0
+        if q > 0 and str(r.get("Nome", "")).strip():
+            out[norm(str(r["Nome"]))] = float(q)
+    print(f"[listone] {len(out)} quotazioni da {path}")
+    return out
+
+
 def fetch_provider_stats():
     """1 chiamata bulk -> indice, titolarità, continuità, MV, clean sheets. Cache data/provider_ext.json"""
     cache = "data/provider_ext.json"

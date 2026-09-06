@@ -2,12 +2,12 @@
 const LS = 'fanta-asta-v1', LSD = LS + '-data', LSR = LS + '-rose';
 const ROLES = ['POR', 'DIF', 'CEN', 'ATT'];
 const BUILTIN = { partecipanti: 10, crediti: 1000, slot: { POR: 3, DIF: 8, CEN: 8, ATT: 6 } };
-const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Punteggio|Età|Forma)/;
+const NUMRE = /^(Pres|Gol|xG|Assist|xA|Fantamedia|Indice|Titolarit|Continuit|MV|Prezzo_|Affare|Score|Convenienza|Fonte|Età|Forma)/;
 
 let DATA = [], HEADERS = [], PRICE = '', TEAMCOL = '', GOLP = '', XGP = '', ASSP = '', XAP = '', PRESP = '';
 let GOLC = '', XGC = '', ASSC = '', XAC = '', PRESC = '', FMP = '', FML = '', TIT = '';
 let ROSE = [];
-let state = null, sort = { col: 'Punteggio Asta (/100)', dir: -1 }, filt = { q: '', role: 'ALL', free: true, gem: false, star: false, shop: false };
+let state = null, sort = { col: 'Affare FPY', dir: -1 }, filt = { q: '', role: 'ALL', free: true, gem: false, star: false, shop: false };
 let expanded = null;
 
 const $ = id => document.getElementById(id);
@@ -49,7 +49,7 @@ function setData(rows) {
   FMP = HEADERS.includes('Fantamedia Prev') ? 'Fantamedia Prev' : '';
   FML = HEADERS.includes('Fantamedia Live') ? 'Fantamedia Live' : '';
   TIT = HEADERS.includes('Titolarità') ? 'Titolarità' : '';
-  if (!HEADERS.includes(sort.col)) sort = { col: 'Punteggio Asta (/100)', dir: -1 };
+  if (!HEADERS.includes(sort.col)) sort = { col: 'Affare FPY', dir: -1 };
   try { localStorage.setItem(LSD, JSON.stringify(rows)); } catch (e) {}
   $('filestatus').textContent = rows.length + ' giocatori caricati';
   renderAll();
@@ -70,12 +70,12 @@ function teamStats() {
 const byName = n => DATA.find(r => r['Calciatore'] === n);
 
 // ---------- listone ----------
-const DEFAULT_COLS = () => ['Calciatore', 'Ruolo', TEAMCOL, 'Punteggio Asta (/100)', PRICE, FMP, GOLP, XGP].filter(c => c && HEADERS.includes(c));
+const DEFAULT_COLS = () => ['Calciatore', TEAMCOL, 'Ruolo', 'Affare FPY', 'Score FPY', 'Indice Esterno', 'Titolarità', 'Forma serie', 'Infortunato', PRESP, ASSP, 'Assist prev.', GOLP, 'Gol prev.'].filter(c => c && HEADERS.includes(c));
 const visibleCols = () => {
   const v = (state.cols || []).filter(c => HEADERS.includes(c));
   return v.length ? v : DEFAULT_COLS();
 };
-const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Punteggio Asta (/100)': 'Punt.', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Dettaglio infortunio': 'Dettaglio inf.', 'Consiglio rif.': 'Rif.', 'Nazionalità': 'Naz.', 'Forma media': 'Forma', 'Forma serie': 'Serie' };
+const SHORT = { 'Calciatore': 'Giocatore', 'Ruolo': 'R', 'Affare FPY': 'Aff.', 'Score FPY': 'Score', 'Fantamedia Prev': 'FM', 'Fantamedia Live': 'FML', 'Hidden Gem?': 'Gem', 'Infortunato': 'Inf', 'Alternative Affini': 'Altern.', 'Dettaglio infortunio': 'Dettaglio inf.', 'Consiglio rif.': 'Rif.', 'Nazionalità': 'Naz.', 'Forma media': 'Forma', 'Forma serie': 'Serie', 'Fonte Value': 'Fonte' };
 const shortLbl = c => SHORT[c] || (c === TEAMCOL ? 'Squadra' : (/^Prezzo_/.test(c) ? 'Prz' : c));
 
 function filtered() {
@@ -125,12 +125,12 @@ function renderList() {
     const n = r['Calciatore'], a = state.assigned[n], star = state.stars.includes(n), shop = state.shop[n];
     const tr = document.createElement('tr');
     if (a) tr.className = 'taken'; if (star) tr.className += ' star'; if (shop) tr.className += ' shop';
-    let tds = `<td><button class="starbtn${star ? ' on' : ''}" data-star="${esc(n)}">★</button></td>`;
+    let tds = `<td><button class="starbtn${star ? ' on' : ''}" data-star="${esc(n)}">★</button>${a ? '' : `<button class="starbtn" data-assign="${esc(n)}" title="Assegna">🛒</button>`}</td>`;
     cols.forEach(c => {
       let v = r[c], cell;
       if (c === 'Skills') cell = `<td>${skillChips(v)}</td>`;
       else {
-        if (c === PRICE || c === 'Punteggio Asta (/100)') { const x = num(v); v = x === null ? '—' : (c === PRICE ? Math.round(x) : x); }
+        if (c === PRICE || c === 'Affare FPY') { const x = num(v); v = x === null ? '—' : (c === PRICE ? Math.round(x) : x); }
         const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
         cell = `<td${cls}>${esc(v)}</td>`;
       }
@@ -141,7 +141,7 @@ function renderList() {
       const diff = PRICE ? num(r[PRICE]) - a.p : null;
       const b = diff === null ? '' : diff >= 0 ? ` <span class="badge hit">colpo +${Math.round(diff)}</span>` : ` <span class="badge miss">pacco ${Math.round(diff)}</span>`;
       st = `${esc(state.setup.teams[a.t])} ${a.p}${b}`;
-    } else st = `<button data-assign="${esc(n)}">Assegna</button>`;
+    } else st = '—';
     tds += `<td>${st}</td>`;
     tr.innerHTML = tds;
     tr.ondblclick = () => { expanded = expanded === n ? null : n; renderList(); };
@@ -212,7 +212,7 @@ function detailHtml(r) {
   if (sims.length) {
     similiHtml = '<div class="dsec">Simili in squadra (nostro punteggio)</div><div>' + sims.map(s => {
       const m = byName(s);
-      return m ? `<span class="chip"><b>${esc(s)}</b> ${fmt(m['Punteggio Asta (/100)'], 1)} · ${fmt(m[PRICE])}</span>` : `<span class="chip">${esc(s)}</span>`;
+      return m ? `<span class="chip"><b>${esc(s)}</b> ${fmt(m['Affare FPY'], 1)} · ${fmt(m[PRICE])}</span>` : `<span class="chip">${esc(s)}</span>`;
     }).join('') + '</div>';
   }
   const dett = r['Dettaglio infortunio'] ? `<div>🏥 <b class="down">${esc(r['Dettaglio infortunio'])}</b></div>` : '';
@@ -221,7 +221,8 @@ function detailHtml(r) {
     ${gem ? '<span class="badge gem">GEM</span>' : ''}${inj ? '<span class="badge inj">INFORTUNATO</span>' : ''}</div>
     ${dett}
     <div class="drow"><span>Prz <span class="dbig">${fmt(r[PRICE])}</span></span>
-    <span>Punteggio <span class="dbig">${fmt(r['Punteggio Asta (/100)'], 1)}</span></span>
+    <span>Punteggio <span class="dbig">${fmt(r['Affare FPY'], 1)}</span></span>
+    <span>Score <b>${fmt(r['Score FPY'], 1)}</b>${r['Fonte Value'] ? ` (${esc(r['Fonte Value'])})` : ''}</span>
     <span>FM prev <b>${fmt(r[FMP], 1)}</b> · live <b>${fmt(r[FML], 1)}</b></span>
     <span>Trend <b class="${tcls}">${esc(trend || '—')}</b>${cons}</span></div>
     <div class="dsec">Stagione scorsa${GOLP ? ' — ' + esc(GOLP.replace('Gol ', '')) : ''}</div>
@@ -437,7 +438,7 @@ function roseCard(t) {
     else other.push(s);
   });
   const jumpScore = x => {
-    const sc = fmt(x.m['Punteggio Asta (/100)'], 1);
+    const sc = fmt(x.m['Affare FPY'], 1);
     return `<button data-jump="${esc(x.s)}">${esc(x.s)} <b>${sc}</b></button>`;
   };
   const fgroups = ['POR', 'DIF', 'CEN', 'ATT'].filter(r => byRole[r].length)

@@ -1,7 +1,7 @@
 # AGENTS.md — fantacalcio-py
 
 ## Entry
-- Nuovo main: `pipeline.py` (asta: Punteggio_Asta_100, prezzi, Tier, Hidden Gem).
+- Nuovo main: `pipeline.py` (asta: Affare FPY ufficiale /100, legacy Score FPY, prezzi, Hidden Gem).
 - Libreria: `src/` (`config`, `fpd`, `providers`, `merge`, `scoring`, `utils`).
 - `cli.py` = TUI menu (rich) sopra `pipeline.py`: run / status / inspect. `uv run python cli.py`.
 

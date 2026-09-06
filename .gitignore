@@ -106,3 +106,4 @@ Thumbs.db
 # GitHub Pages: frontend in docs/ va pubblicato (config inclusa)
 !docs/*.json
 
+scratch/*
