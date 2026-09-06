@@ -127,10 +127,14 @@ function renderList() {
     if (a) tr.className = 'taken'; if (star) tr.className += ' star'; if (shop) tr.className += ' shop';
     let tds = `<td><button class="starbtn${star ? ' on' : ''}" data-star="${esc(n)}">★</button></td>`;
     cols.forEach(c => {
-      let v = r[c];
-      if (c === PRICE || c === 'Punteggio Asta (/100)') { const x = num(v); v = x === null ? '—' : (c === PRICE ? Math.round(x) : x); }
-      const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
-      tds += `<td${cls}>${esc(v)}</td>`;
+      let v = r[c], cell;
+      if (c === 'Skills') cell = `<td>${skillChips(v)}</td>`;
+      else {
+        if (c === PRICE || c === 'Punteggio Asta (/100)') { const x = num(v); v = x === null ? '—' : (c === PRICE ? Math.round(x) : x); }
+        const cls = NUMRE.test(c) && c !== 'Calciatore' ? ' class="num"' : '';
+        cell = `<td${cls}>${esc(v)}</td>`;
+      }
+      tds += cell;
     });
     let st;
     if (a) {
@@ -165,6 +169,10 @@ function parseSkills(s) {
 const isTrue = v => v === true || v === 1 || String(v).toLowerCase() === 'true';
 const fmt = (v, d = 0) => { const n = num(v); return n === null ? '—' : (d ? n.toFixed(d) : Math.round(n)); };
 
+const NEGRE = /panchinaro|falloso|rischioso/i, POSRE = /rigorista|goleador|titolare|fuoriclasse|buona media|piazzati|assistman|talento|outsider/i;
+const skillChips = v => parseSkills(v).map(s =>
+  `<span class="chip${NEGRE.test(s) ? ' neg' : POSRE.test(s) ? ' pos' : ''}">${esc(s)}</span>`).join('') || '—';
+
 function seasonLine(pref, g, x, a, xa, pr) {
   const gv = num(g), xv = num(x);
   let delta = '';
@@ -179,7 +187,9 @@ function detailHtml(r) {
   const tcls = trend === 'UP' ? 'up' : trend === 'DOWN' ? 'down' : '';
   const gem = r['Hidden Gem?'] === 'SÌ';
   const tit = num(TIT ? r[TIT] : null);
-  const skills = parseSkills(r['Skills']).map(s => `<span class="chip">${esc(s)}</span>`).join('') || '—';
+  const neg = s => NEGRE.test(s);
+  const pos = s => POSRE.test(s);
+  const skills = skillChips(r['Skills']);
   const cons = isTrue(r['Consigliato']) ? ' <b class="up">✓ consigliato</b>' : '';
   const eta = r['Età'] ? ` · ${esc(r['Età'])} anni` : '';
   const naz = r['Nazionalità'] ? ` · ${esc(r['Nazionalità'])}` : '';
