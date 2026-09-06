@@ -48,7 +48,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 nav button.active { background: var(--acc); border-color: var(--acc); color: var(--acc-ink); font-weight: 600; }
 #filebar { margin-left: auto; display: flex; gap: 8px; align-items: center; }
 #filestatus, #rosestatus { color: var(--mut); font-size: 12.5px; }
-main { padding: 24px 16px 40px; max-width: 1500px; margin: 0 auto; }
+main { padding: 24px 20px 48px; max-width: none; }
 #filters { display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 10px; }
 #q {
   flex: 1; min-width: 160px; padding: 8px 10px; border-radius: 6px;
