@@ -93,7 +93,7 @@ function filtered() {
   rows = rows.slice().sort((a, b) => {
     if (col === 'Calciatore') return dir * String(a[col]).localeCompare(String(b[col]));
     const x = num(a[col]), y = num(b[col]);
-    if (x === null && y === null) return 0;
+    if (x === null && y === null) return dir * String(a[col] ?? '').localeCompare(String(b[col] ?? ''), 'it');
     if (x === null) return 1; if (y === null) return -1;
     return dir * (x - y);
   });
