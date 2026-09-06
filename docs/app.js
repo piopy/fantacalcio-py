@@ -193,52 +193,59 @@ function detailHtml(r) {
   const cons = isTrue(r['Consigliato']) ? ' <b class="up">✓ consigliato</b>' : '';
   const eta = r['Età'] ? ` · ${esc(r['Età'])} anni` : '';
   const naz = r['Nazionalità'] ? ` · ${esc(r['Nazionalità'])}` : '';
-  // forma ultime gare
+  // forma ultime gare (card propria)
   let formaHtml = '';
   const serie = String(r['Forma serie'] || '').split('|').map(num).filter(v => v !== null);
   if (serie.length) {
     const d = serie[serie.length - 1] - serie[0];
     const dc = d > 0 ? 'up' : d < 0 ? 'down' : '';
-    formaHtml = `<div class="dsec">Forma ultime gare</div>
+    formaHtml = `<div class="dcard"><h5>Forma</h5>
       <div class="drow"><span>${serie.join(' · ')}</span><span>media <b>${esc(r['Forma media'])}</b></span>
-      ${serie.length > 1 ? `<span class="${dc}"><b>${d > 0 ? '+' : ''}${d.toFixed(1)}</b></span>` : ''}</div>`;
+      ${serie.length > 1 ? `<span class="${dc}"><b>${d > 0 ? '+' : ''}${d.toFixed(1)}</b></span>` : ''}</div></div>`;
   }
-  // consiglio editoriale
-  const consiglio = r['Consiglio'] ? `<div class="dsec">Consiglio ${esc(r['Consiglio rif.'] || '')}</div>
-    <div><i>“${esc(String(r['Consiglio']).slice(0, 400))}”</i></div>` : '';
-  // simili con nostro punteggio
-  let similiHtml = '';
+  // consiglio editoriale (card propria)
+  const consiglio = r['Consiglio'] ? `<div class="dcard wide"><h5>Consiglio ${esc(r['Consiglio rif.'] || '')}</h5>
+    <div><i>“${esc(String(r['Consiglio']).slice(0, 400))}”</i></div></div>` : '';
+  // simili + alternative (card propria, chip: score · affare)
   const sims = String(r['Simili'] || '').split('|').map(s => s.trim()).filter(Boolean);
-  if (sims.length) {
-    similiHtml = '<div class="dsec">Simili in squadra (nostro punteggio)</div><div>' + sims.map(s => {
-      const m = byName(s);
-      return m ? `<span class="chip"><b>${esc(s)}</b> ${fmt(m['Affare FPY'], 1)} · ${fmt(m[PRICE])}</span>` : `<span class="chip">${esc(s)}</span>`;
-    }).join('') + '</div>';
-  }
+  const chipSA = (s, sc, aff) => `<span class="chip"><b>${esc(s)}</b> ${fmt(sc, 1)} · ${fmt(aff, 1)}</span>`;
+  const simChips = sims.map(s => {
+    const m = byName(s);
+    return m ? chipSA(s, m['Score FPY'], m['Affare FPY']) : `<span class="chip">${esc(s)}</span>`;
+  }).join('');
+  const altChips = String(r['Alternative Affini'] || '').split('), ').map(a => {
+    const s = a.split(' (')[0].trim();
+    if (!s || s === '-') return '';
+    const m = byName(s);
+    return m ? chipSA(s, m['Score FPY'], m['Affare FPY']) : `<span class="chip">${esc(a)}</span>`;
+  }).join('');
+  const simAlt = (simChips || altChips) ? `<div class="dcard"><h5>Simili e alternative</h5>` +
+    (simChips ? `<div class="dsub">Simili in squadra</div><div>${simChips}</div>` : '') +
+    (altChips ? `<div class="dsub">Alternative</div><div>${altChips}</div>` : '') + '</div>' : '';
   const dett = r['Dettaglio infortunio'] ? `<div>🏥 <b class="down">${esc(r['Dettaglio infortunio'])}</b></div>` : '';
   const opts = state.setup.teams.map((t, i) => `<option value="${i}"${i === state.setup.mine ? ' selected' : ''}>${esc(t)}</option>`).join('');
   return `<div class="dhead"><span class="nm">${esc(n)}</span><span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}${eta}${naz}</span>
     ${gem ? '<span class="badge gem">GEM</span>' : ''}${inj ? '<span class="badge inj">INFORTUNATO</span>' : ''}</div>
     ${dett}
-    <div class="drow"><span>Prz <span class="dbig">${fmt(r[PRICE])}</span></span>
-    <span>Punteggio <span class="dbig">${fmt(r['Affare FPY'], 1)}</span></span>
-    <span>Score <b>${fmt(r['Score FPY'], 1)}</b>${r['Fonte Value'] ? ` (${esc(r['Fonte Value'])})` : ''}</span>
-    <span>FM prev <b>${fmt(r[FMP], 1)}</b> · live <b>${fmt(r[FML], 1)}</b></span>
-    <span>Trend <b class="${tcls}">${esc(trend || '—')}</b>${cons}</span></div>
-    <div class="dsec">Stagione scorsa${GOLP ? ' — ' + esc(GOLP.replace('Gol ', '')) : ''}</div>
-    <div>${seasonLine(0, r[GOLP], r[XGP], r[ASSP], r[XAP], r[PRESP])}</div>
-    ${GOLC ? `<div class="dsec">Stagione live — ${esc(GOLC.replace('Gol ', ''))}</div><div>${seasonLine(0, r[GOLC], r[XGC], r[ASSC], r[XAC], r[PRESC])}</div>` : ''}
-    <div class="dsec">Stato</div>
-    <div class="drow"><span>Titolarità ${tit === null ? '—' : `<b>${Math.round(tit)}%</b> <span class="bar"><i style="width:${Math.min(100, Math.max(0, tit))}%"></i></span>`}</span>
-    <span>Indice <b>${fmt(r['Indice Esterno'])}</b></span>
-    <span>Resist. infort. <b>${esc(r['Resist. infort.'] || '—')}</b></span>
-    <span>Gol/ass prev. <b>${esc(r['Gol prev.'] || '—')}/${esc(r['Assist prev.'] || '—')}</b></span></div>
-    <div style="margin-top:4px">${skills}</div>
-    ${r['Motivo'] && r['Motivo'] !== '-' ? `<div><i>${esc(r['Motivo'])}</i></div>` : ''}
+    <div class="dgrid">
+    <div class="dcard"><h5>Verdetto</h5><div class="drow"><span>Affare <span class="dbig">${fmt(r['Affare FPY'], 1)}</span></span>
+    <span>Score <span class="dbig">${fmt(r['Score FPY'], 1)}</span></span>
+    <span>Prz <span class="dbig">${fmt(r[PRICE])}</span></span></div>
+    ${r['Fonte Value'] ? `<div>Fonte: ${esc(r['Fonte Value'])}</div>` : ''}</div>
+    <div class="dcard"><h5>Rendimento</h5>
+    <div>FM ${(GOLP || '').replace('Gol ', '')} <b>${fmt(r[FMP], 1)}</b> · FM ${(GOLC || '').replace('Gol ', '') || 'live'} <b>${fmt(r[FML], 1)}</b> · Trend <b class="${tcls}">${esc(trend || '—')}</b>${cons}</div>
+    <div><b>${esc((GOLP || '').replace('Gol ', ''))}</b> · ${seasonLine(0, r[GOLP], r[XGP], r[ASSP], r[XAP], r[PRESP])}</div>
+    ${GOLC ? `<div><b>${esc(GOLC.replace('Gol ', ''))}</b> · ${seasonLine(0, r[GOLC], r[XGC], r[ASSC], r[XAC], r[PRESC])}</div>` : ''}</div>
+    <div class="dcard"><h5>Stato fisico</h5>
+    <div>Titolarità ${tit === null ? '—' : `<b>${Math.round(tit)}%</b> <span class="bar"><i style="width:${Math.min(100, Math.max(0, tit))}%"></i></span>`}</div>
+    <div>Resist. infort. <b>${esc(r['Resist. infort.'] || '—')}</b> · Redaz. prevede gol/ass <b>${esc(r['Gol prev.'] || '—')}/${esc(r['Assist prev.'] || '—')}</b> · Indice est. <b>${fmt(r['Indice Esterno'])}</b></div></div>
+    <div class="dcard"><h5>Giudizio</h5>
+    <div style="margin-bottom:4px">${skills}</div>
+    ${r['Motivo'] && r['Motivo'] !== '-' ? `<div><i>${esc(r['Motivo'])}</i></div>` : ''}</div>
     ${formaHtml}
+    ${simAlt}
     ${consiglio}
-    ${similiHtml}
-    ${r['Alternative Affini'] ? `<div class="dsec">Alternative</div><div>${esc(r['Alternative Affini'])}</div>` : ''}
+    </div>
     <div class="row" style="margin-top:8px">
       <select id="as-team">${opts}</select>
       <input id="as-price" type="number" min="1" value="${Math.round(num(r[PRICE]) || 1)}" style="width:80px">

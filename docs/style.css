@@ -91,6 +91,14 @@ input, select {
 }
 button.danger { background: var(--bad-bg); border-color: var(--bad-bg); color: var(--bad); font-weight: 600; }
 .dhead { display: flex; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 6px; }
+.dgrid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin: 8px 0; }
+@media (max-width: 1100px) { .dgrid { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 700px) { .dgrid { grid-template-columns: 1fr; } }
+.dcard.wide { grid-column: 1 / -1; }
+.dsub { font-size: 11px; color: var(--faint); font-weight: 600; margin: 6px 0 2px; }
+.dcard { background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px 12px; font-size: 13px; }
+.dcard h5 { margin: 0 0 6px; font-size: 11px; text-transform: uppercase; letter-spacing: 0.07em; color: var(--faint); font-weight: 600; }
+.dcard .drow { gap: 12px; }
 .dhead .nm {
   font-family: Georgia, 'Times New Roman', serif;
   font-size: 20px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.1;
