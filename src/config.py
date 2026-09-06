@@ -13,9 +13,20 @@ OUTPUT_DIR = os.path.join(DATA_DIR, "output")
 GIOCATORI_URLS_FILE = os.path.join(DATA_DIR, "giocatori_urls.txt")
 GIOCATORI_CSV = os.path.join(DATA_DIR, "_giocatori.csv")
 
-# URLS
+# URLS — unico punto di raccolta. Sorgenti offuscate: solo base64 qui,
+# mai URL in chiaro nel resto del codice.
 BASEURL_FPD = decode("aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20=")
 FPD_URL = f"{BASEURL_FPD}/lista-calciatori-serie-a/"
+EXT_LOGIN_URL = decode("aHR0cHM6Ly9oM3BweGlycXNnLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3Byb2QvYXV0aC9lbWFpbC9sb2dpbg==")
+EXT_ORIGIN = decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw==")
+EXT_CLIENT_ID = decode("ZmFudGFnb2F0LWFwcA==")
+EXT_API_HOST = decode("YXBpLmZhbnRhZ29hdC5pdA==")
+EXT_PLAYERS_URL = decode("aHR0cHM6Ly9hcGkuZmFudGFnb2F0Lml0L3YxL3BsYXllcnM=")
+EXT_STANDINGS_URL = decode("aHR0cHM6Ly9hcGkuZmFudGFnb2F0Lml0L3YxL3N0YW5kaW5ncw==")
+STATS_LEAGUE_URL = decode("aHR0cHM6Ly91bmRlcnN0YXQuY29tL2xlYWd1ZS9TZXJpZV9BLw==")
+STATS_PLAYERS_URL = decode("aHR0cHM6Ly91bmRlcnN0YXQuY29tL21haW4vZ2V0UGxheWVyc1N0YXRzLw==")
+INF_URL = decode("aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20vYXJ0aWNvbGktZmNwL2NvbnNpZ2xpLWZhbnRhY2FsY2lvLzc1LWxpc3RhLWluZm9ydHVuYXRpLXNlcmllLWEtYWdnaW9ybmF0YS5odG1s")
+ROSE_INDEX_URL = decode("aHR0cHM6Ly93d3cuZmFudGFjYWxjaW9wZWRpYS5jb20vcm9zZS1zZXJpZS1hLw==")
 
 # Scraping
 RUOLI = ["Portieri", "Difensori", "Centrocampisti", "Trequartisti", "Attaccanti"]

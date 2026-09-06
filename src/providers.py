@@ -25,9 +25,9 @@ def _fanta_get(url, timeout=20):
     pwd = os.getenv("FSTATS_PASSWORD")
     if not mail or not pwd:
         return None
-    r = requests.post(config.decode("aHR0cHM6Ly9oM3BweGlycXNnLmV4ZWN1dGUtYXBpLnVzLWVhc3QtMi5hbWF6b25hd3MuY29tL3Byb2QvYXV0aC9lbWFpbC9sb2dpbg=="),
+    r = requests.post(config.EXT_LOGIN_URL,
         json={"email": mail, "password": pwd},
-        headers={"content-type": "application/json", "origin": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "referer": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "x-client-id": config.decode("ZmFudGFnb2F0LWFwcA=="), "user-agent": "Mozilla/5.0"}, timeout=timeout)
+        headers={"content-type": "application/json", "origin": config.EXT_ORIGIN, "referer": config.EXT_ORIGIN, "x-client-id": config.EXT_CLIENT_ID, "user-agent": "Mozilla/5.0"}, timeout=timeout)
     r.raise_for_status()
     tok = r.json().get("access_token")
     if not tok:
@@ -35,13 +35,13 @@ def _fanta_get(url, timeout=20):
     orig = socket.getaddrinfo
 
     def patched(h, p, *a, **kw):
-        if h == config.decode("YXBpLmZhbnRhZ29hdC5pdA=="):
+        if h == config.EXT_API_HOST:
             return [(socket.AF_INET, socket.SOCK_STREAM, 6, '', ('188.114.96.7', p))]
         return orig(h, p, *a, **kw)
 
     socket.getaddrinfo = patched
     try:
-        rr = requests.get(url, headers={"accept": "application/json", "authorization": f"Bearer {tok}", "origin": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "referer": config.decode("aHR0cHM6Ly9hcHAuZmFudGFnb2F0Lml0Lw=="), "user-agent": "Mozilla/5.0"}, timeout=timeout)
+        rr = requests.get(url, headers={"accept": "application/json", "authorization": f"Bearer {tok}", "origin": config.EXT_ORIGIN, "referer": config.EXT_ORIGIN, "user-agent": "Mozilla/5.0"}, timeout=timeout)
         if rr.status_code != 200:
             return None
         return rr.json()
@@ -54,7 +54,7 @@ def get_tier_weights(anno):
     season = anno - 1
     table = None
     try:
-        j = _fanta_get("https://api.fantagoat.it/v1/standings", timeout=10)
+        j = _fanta_get(config.EXT_STANDINGS_URL, timeout=10)
         if j:
             data = j.get("data", [])
             if data and max(d.get("played", 0) for d in data) >= 34:
@@ -68,11 +68,11 @@ def get_tier_weights(anno):
     return _weights_from_table(table)
 
 
-def fetch_understat(season: int):
-    cache = f"data/understat_{season}.json"
+def fetch_stats(season: int):
+    cache = f"data/stats_{season}.json"
     if not os.path.exists(cache):
-        league_url = f"{config.decode('aHR0cHM6Ly91bmRlcnN0YXQuY29tL2xlYWd1ZS9TZXJpZV9BLw==')}{season}"
-        stats_url = config.decode("aHR0cHM6Ly91bmRlcnN0YXQuY29tL21haW4vZ2V0UGxheWVyc1N0YXRzLw==")
+        league_url = f"{config.STATS_LEAGUE_URL}{season}"
+        stats_url = config.STATS_PLAYERS_URL
         s = requests.Session()
         h = {"User-Agent": "Mozilla/5.0", "X-Requested-With": "XMLHttpRequest", "Referer": league_url}
         s.get(league_url, headers=h)
@@ -107,8 +107,7 @@ def fetch_provider_stats():
     if os.path.exists(cache):
         data = json.load(open(cache))
     else:
-        api_url = config.decode("aHR0cHM6Ly9hcGkuZmFudGFnb2F0Lml0L3YxL3BsYXllcnM=")
-        data = _fanta_get(api_url)
+        data = _fanta_get(config.EXT_PLAYERS_URL)
         if not data:
             print("[provider ext] credenziali mancanti o fetch fallito, skip")
             return pd.DataFrame()
@@ -133,15 +132,12 @@ def fetch_provider_stats():
     return df
 
 
-INF_URL = "https://www.fantacalciopedia.com/articoli-fcp/consigli-fantacalcio/75-lista-infortunati-serie-a-aggiornata.html"
-
-
 def fetch_infortunati():
     """Articolo infortunati -> [{squadra, voci:[{nome, dettaglio}]}]. Cache data/infortunati.json"""
     cache = "data/infortunati.json"
     if os.path.exists(cache):
         return json.load(open(cache))
-    s = BeautifulSoup(requests.get(INF_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20).content, "html.parser")
+    s = BeautifulSoup(requests.get(config.INF_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20).content, "html.parser")
     for bad in s(["script", "style", "nav", "footer", "header", "form"]):
         bad.decompose()
     lines = [l for l in s.get_text("\n", strip=True).split("\n") if l]
@@ -165,7 +161,7 @@ def fetch_rose(anno):
     if os.path.exists(cache):
         return json.load(open(cache))
     h = {"User-Agent": "Mozilla/5.0"}
-    idx = BeautifulSoup(requests.get("https://www.fantacalciopedia.com/rose-serie-a/", headers=h, timeout=20).content, "html.parser")
+    idx = BeautifulSoup(requests.get(config.ROSE_INDEX_URL, headers=h, timeout=20).content, "html.parser")
     teams = []
     for a in idx.find_all("a", href=re.compile(r"/rose-serie-a/\d+/\w+")):
         if a["href"] not in [t[1] for t in teams]:

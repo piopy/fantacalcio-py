@@ -4,7 +4,7 @@ Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fanta
 
 1.  **Recupero Dati**: Scarica i dati dei calciatori da:
     *   **FPD**: per anagrafiche, ruoli, skills.
-    *   **Understat**: per xG/xA e stats stagione prev/corr (sostituisce FSTATS, non più funzionante).
+    *   **Stats pubbliche**: per xG/xA e stats stagione prev/corr.
 2.  **Elaborazione e Unione**: Pulisce, elabora e unisce i dati provenienti dalle diverse fonti in un unico dataset.
 3.  **Calcolo Indice di Convenienza**: Calcola un indice di "convenienza" per ogni giocatore. Questo indice mette in rapporto il valore di un giocatore (prezzo base all'asta) con il suo rendimento passato e attuale, aiutando a identificare giocatori sottovalutati.
 4.  **Salvataggio Risultati**: I risultati finali, ordinati per indice di convenienza, vengono salvati in un file Excel.
@@ -15,8 +15,6 @@ Fantacalcio-PY è un tool che aiuta gli utenti a prepararsi per l'asta del fanta
 - Il tool utilizza i csv prodotti da fpd, tutti i dati processati sono loro, dato che fantagazzetta ha deciso di tagliare i dataset open.
 
 *Refactor del codice di cttynul*
-
-## [Cliccare qui per il README della CLI](README_CLI.md)
 
 ## Prerequisiti
 
@@ -38,7 +36,7 @@ Python 3.10+ e [uv](https://docs.astral.sh/uv/). (Il `pyproject.toml` è ancora 
 
 ## Configurazione
 
-Crea un file `.env` nella root con le credenziali provider esterno (nome legacy: autenticano FantaGOAT, non FSTATS):
+Crea un file `.env` nella root con le credenziali del provider esterno:
 
 ```bash
 FSTATS_MAIL=tuamail@example.com

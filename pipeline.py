@@ -1,6 +1,6 @@
 # pipeline.py — nuovo main. python pipeline.py --anno 2026 --partecipanti 10 --crediti 500
 import argparse, json, os, pandas as pd
-from src.providers import fetch_understat, load_fp, fetch_provider_stats, fetch_infortunati, fetch_rose
+from src.providers import fetch_stats, load_fp, fetch_provider_stats, fetch_infortunati, fetch_rose
 from src.merge import merge
 from src.scoring import score_df, alternatives
 
@@ -14,8 +14,8 @@ def main():
     p.add_argument("--no-ext", action="store_true", help="skip provider esterno")
     args = p.parse_args()
     fp = load_fp(force=args.force)
-    u_prev = fetch_understat(args.anno - 1)
-    u_curr = fetch_understat(args.anno)
+    u_prev = fetch_stats(args.anno - 1)
+    u_curr = fetch_stats(args.anno)
     ext = pd.DataFrame() if args.no_ext else fetch_provider_stats()
     inf = [] if args.no_ext else fetch_infortunati()
     rose = [] if args.no_ext else fetch_rose(args.anno)
