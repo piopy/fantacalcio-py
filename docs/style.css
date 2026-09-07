@@ -125,6 +125,8 @@ button.danger { background: var(--bad-bg); border-color: var(--bad-bg); color: v
 #colhelp { columns: 260px; margin-top: 4px; }
 #colhelp div { break-inside: avoid; padding: 1px 0; }
 #colhelp span { color: var(--mut); font-size: 12px; }
+#colexp .motto { margin-top: 6px; font-style: italic; color: var(--mut); }
+.view-list .motto, #view-list .motto { font-family: Georgia, 'Times New Roman', serif; font-style: italic; font-size: 15px; color: var(--mut); text-align: center; margin: 2px 0 8px; letter-spacing: .02em; }
 #s-prev { margin-top: 6px; }
 .roster { margin: 4px 0 4px 16px; padding: 0; }
 .roster li { margin: 2px 0; }
@@ -132,5 +134,8 @@ button.danger { background: var(--bad-bg); border-color: var(--bad-bg); color: v
 .starbtn { cursor: pointer; border: 0; background: none; font-size: 16px; color: var(--faint); }
 .starbtn.on { color: var(--gold); }
 .empty { color: var(--mut); padding: 24px 8px; }
+#demoexp { margin: 0 0 8px; font-size: 13px; }
+#demoexp summary { cursor: pointer; color: var(--mut); text-align: center; }
+#demoteam small, #demoteam .tot { color: var(--mut); }
 .err { color: var(--bad); font-size: 13px; margin: 4px 0; }
 .ord { cursor: grab; }

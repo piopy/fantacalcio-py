@@ -2,12 +2,14 @@
 <html lang="it">
 
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<meta name="description" content="Fantacalcio-py: listone asta filtrabile, budget squadre, infortunati e rose Serie A. Funziona offline da file.">
-<meta name="theme-color" content="#F7F6F3">
-<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚽%3C/text%3E%3C/svg%3E">
-<title>Fantacalcio-py</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description"
+    content="Fantacalcio-py: listone asta filtrabile, budget squadre, infortunati e rose Serie A. Funziona offline da file.">
+  <meta name="theme-color" content="#F7F6F3">
+  <link rel="icon"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Ctext y='.9em' font-size='90'%3E⚽%3C/text%3E%3C/svg%3E">
+  <title>Fantacalcio-py</title>
   <link rel="stylesheet" href="style.css">
 </head>
 
@@ -22,7 +24,7 @@
       <button data-view="setup">Setup</button>
     </nav>
     <div id="filebar">
-    <button id="theme" title="Passa a tema scuro/chiaro">☾</button>
+      <button id="theme" title="Passa a tema scuro/chiaro">☾</button>
       <button id="save-top" class="danger">Salva dati</button>
       <label class="filebtn">Carica JSON Fantacalcio-PY <input type="file" id="file" accept=".json,application/json"
           hidden></label>
@@ -33,6 +35,12 @@
   </header>
   <main>
     <section id="view-list" class="view">
+      <div class="motto">Impossibile una squadra di sole stelle, inutile di soli mediocri: punta a 2-3 top (Score), poi
+        affari.</div>
+      <details id="demoexp">
+        <summary>Squadra esempio (3 POR · 8 DIF · 8 CEN · 6 ATT: top Score ★ + affari)</summary>
+        <div id="demoteam"></div>
+      </details>
       <div id="filters">
         <input id="q" type="search" placeholder="Cerca giocatore…" autocomplete="off">
         <div id="rolebtns"></div>
@@ -97,10 +105,10 @@
       </div>
       <h3>Squadre <button id="s-add">+ aggiungi</button></h3>
       <div id="s-teams"></div>
-    <h3>Colonne listone</h3>
-    <div id="s-cols"></div>
-    <h4>Ordine colonne visibili</h4>
-    <div id="s-order"></div>
+      <h3>Colonne listone</h3>
+      <div id="s-cols"></div>
+      <h4>Ordine colonne visibili</h4>
+      <div id="s-order"></div>
       <h4>Anteprima</h4>
       <table id="s-prev">
         <thead>
@@ -116,7 +124,7 @@
       </div>
     </section>
   </main>
-  <script src="app.js"></script>
+  <script src="app.js?v=2"></script>
 </body>
 
 </html>

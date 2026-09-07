@@ -441,6 +441,46 @@ function renderColHelp() {
   box.innerHTML = HEADERS.map(h => `<div><b>${esc(shortLbl(h))}</b> <span>${esc(colHelp(h))}</span></div>`).join('');
 }
 
+// ---------- squadra esempio ----------
+// ponytail: greedy didattico, non knapsack ottimo (basta a mostrare strategia top+affari)
+function demoSquad() {
+  const box = $('demoteam');
+  if (!DATA.length) { box.innerHTML = '<span class="empty">Carica il listone per vedere esempio.</span>'; return; }
+  const bad = r => r['Dettaglio infortunio'] || isTrue(r['Infortunato']) || state.assigned[r['Calciatore']]
+    || (TIT && num(r[TIT]) !== null && num(r[TIT]) < 50); // scarta riserve, ignora se dato assente
+  const pool = r => DATA.filter(x => roleOf(x['Ruolo']) === r && !bad(x) && num(x[PRICE]) > 0);
+  const byS = r => pool(r).slice().sort((a, b) => (num(b['Score FPY']) || 0) - (num(a['Score FPY']) || 0));
+  const byA = r => pool(r).slice().sort((a, b) => (num(b['Affare FPY']) || 0) - (num(a['Affare FPY']) || 0));
+  const TOP = { ATT: 1, CEN: 1, DIF: 0, POR: 1 }; // 3 top Score (incluso portiere: rende poco, costa poco)
+  const slots = { POR: 3, DIF: 8, CEN: 8, ATT: 6 }, budget = state.setup.credits;
+  const pick = [], taken = new Set();
+  let left = budget;
+  const openSlots = () => ROLES.reduce((t, r) => t + slots[r], 0) - pick.length;
+  ROLES.forEach(r => byS(r).slice(0, TOP[r]).forEach(p => {
+    if (openSlots() <= 0) return;
+    const pr = num(p[PRICE]) || 1;
+    if (pr > left - (openSlots() - 1)) return; // tiene 1cr per slot rimanenti
+    taken.add(p['Calciatore']); pick.push({ p, tag: 'top' }); left -= pr;
+  }));
+  ROLES.forEach(r => {
+    const need = (slots[r] || 0) - pick.filter(x => roleOf(x.p['Ruolo']) === r).length;
+    let n = 0;
+    for (const p of byA(r)) {
+      if (n >= need) break;
+      if (taken.has(p['Calciatore'])) continue;
+      const pr = num(p[PRICE]) || 1;
+      if (pr > left - (openSlots() - 1)) continue;
+      taken.add(p['Calciatore']); pick.push({ p, tag: 'affare' }); left -= pr; n++;
+    }
+  });
+  box.innerHTML = ROLES.map(r => {
+    const rows = pick.filter(x => roleOf(x.p['Ruolo']) === r);
+    if (!rows.length) return '';
+    return `<h4>${r}</h4><ul class="roster">` + rows.map(x =>
+      `<li>${esc(x.p['Calciatore'])} <small>${num(x.p[PRICE])}cr · S${x.p['Score FPY']} A${x.p['Affare FPY']}${x.tag === 'top' ? ' ★' : ''}</small></li>`).join('') + '</ul>';
+  }).join('') + `<div class="tot">${pick.length} giocatori</div>`;
+}
+
 // ---------- infortunati ----------
 // sortIdx: 0=Giocatore 1=R 2=Squadra 3=Dettaglio 4=Stato ; dir 1/-1
 let infSort = { col: 2, dir: 1 };
@@ -605,6 +645,7 @@ function init() {
     rd.readAsText(f);
   };
   $('s-reset').onclick = () => { if (confirm('Azzera assegnazioni?')) { state.assigned = {}; state.hist = []; save(); renderAll(); } };
+  const dx = $('demoexp'); if (dx) dx.addEventListener('toggle', () => { if (dx.open && !$('demoteam').innerHTML) demoSquad(); });
   renderAll();
 }
 document.addEventListener('DOMContentLoaded', init);
