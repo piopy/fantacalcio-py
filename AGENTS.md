@@ -11,6 +11,7 @@ README cita ancora poetry ma l'env attivo è uv (`.venv`, `uv.lock`):
 uv run pipeline.py --anno 2026 --partecipanti 10 --crediti 500
 uv run pipeline.py --no-ext   # senza provider esterno
 uv run pipeline.py --force    # re-scrape FPD (~76s)
+uv run pipeline.py --force-all # tutte le cache: FPD + stats + provider ext + infortunati + rose
 ```
 - Deps da `[project]` in `pyproject.toml` (`uv sync` basta; `[tool.uv] package=false` perché non è un package installabile). Sezione `[tool.poetry]` legacy, ignorarla.
 - Import interni sempre come package: `from src.xxx import ...`, mai `import config` root-style.

@@ -68,9 +68,9 @@ def get_tier_weights(anno):
     return _weights_from_table(table)
 
 
-def fetch_stats(season: int):
+def fetch_stats(season: int, force: bool = False):
     cache = f"data/stats_{season}.json"
-    if not os.path.exists(cache):
+    if force or not os.path.exists(cache):
         league_url = f"{config.STATS_LEAGUE_URL}{season}"
         stats_url = config.STATS_PLAYERS_URL
         s = requests.Session()
@@ -114,10 +114,10 @@ def load_listone(path):
     return out
 
 
-def fetch_provider_stats():
+def fetch_provider_stats(force: bool = False):
     """1 chiamata bulk -> indice, titolarità, continuità, MV, clean sheets. Cache data/provider_ext.json"""
     cache = "data/provider_ext.json"
-    if os.path.exists(cache):
+    if os.path.exists(cache) and not force:
         data = json.load(open(cache))
     else:
         data = _fanta_get(config.EXT_PLAYERS_URL)
@@ -145,10 +145,10 @@ def fetch_provider_stats():
     return df
 
 
-def fetch_infortunati():
+def fetch_infortunati(force: bool = False):
     """Articolo infortunati -> [{squadra, voci:[{nome, dettaglio}]}]. Cache data/infortunati.json"""
     cache = "data/infortunati.json"
-    if os.path.exists(cache):
+    if os.path.exists(cache) and not force:
         return json.load(open(cache))
     s = BeautifulSoup(requests.get(config.INF_URL, headers={"User-Agent": "Mozilla/5.0"}, timeout=20).content, "html.parser")
     for bad in s(["script", "style", "nav", "footer", "header", "form"]):
@@ -168,10 +168,10 @@ def fetch_infortunati():
     return out
 
 
-def fetch_rose(anno):
+def fetch_rose(anno, force: bool = False):
     """Rose Serie A -> [{squadra, modulo, formazione[], rigoristi[], migliori[]}]. Cache data/rose_<anno>.json"""
     cache = f"data/rose_{anno}.json"
-    if os.path.exists(cache):
+    if os.path.exists(cache) and not force:
         return json.load(open(cache))
     h = {"User-Agent": "Mozilla/5.0"}
     idx = BeautifulSoup(requests.get(config.ROSE_INDEX_URL, headers=h, timeout=20).content, "html.parser")

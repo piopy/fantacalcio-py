@@ -24,11 +24,14 @@ def cmd_run():
     anno = _ask_int("Anno", 2026)
     part = _ask_int("Partecipanti", 10)
     cred = _ask_int("Crediti", 500)
-    force = Confirm.ask("Forza re-scrape?", default=False)
+    force = Confirm.ask("Forza re-scrape FPD?", default=False)
+    force_all = Confirm.ask("Forza tutto (Understat+ext+rose/inf)?", default=False)
     no_ext = Confirm.ask("Salta provider esterno?", default=False)
     argv = ["pipeline.py", "--anno", str(anno), "--partecipanti", str(part), "--crediti", str(cred)]
     if force:
         argv.append("--force")
+    if force_all:
+        argv.append("--force-all")
     if no_ext:
         argv.append("--no-ext")
     sys.argv = argv

@@ -55,6 +55,7 @@ Entrypoint: `pipeline.py` (punteggio asta /100, prezzi per crediti, Hidden Gem, 
 uv run pipeline.py --anno 2026 --partecipanti 10 --crediti 500
 uv run pipeline.py --no-ext    # senza provider esterno
 uv run pipeline.py --force     # re-scrape FPD (~60s)
+uv run pipeline.py --force-all # re-download tutte le cache: FPD + stats Understat + provider ext + infortunati + rose
 uv run pipeline.py --listone Quotazioni_Fantacalcio_Stagione_2026_27.xlsx  # Affare con prezzi reali
 ```
 
