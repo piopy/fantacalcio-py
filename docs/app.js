@@ -352,7 +352,7 @@ function formCard(n) {
   if (!r) return `<div class="fcard" data-n="${esc(n)}">${esc(n)} <small>?</small></div>`;
   const badges = (isTrue(r['Consigliato']) ? ' ★' : '') + (isTrue(r['Infortunato']) || r['Dettaglio infortunio'] ? ' ⚠' : '');
   const serie = String(r['Forma serie'] || '').split('|').map(s => s.trim()).filter(Boolean).join(' · ');
-  return `<div class="fcard" draggable="true" data-n="${esc(n)}"><b>${esc(n)}</b>${badges}`
+  return `<div class="fcard" draggable="true" data-n="${esc(n)}"><b>${esc(n)}</b> <i>${esc(r[TEAMCOL] || '')}</i>${badges}`
     + `<div>Indice <b>${r['Indice Esterno'] ?? '—'}</b> · Score ${r['Score FPY'] ?? '—'}</div>`
     + (serie ? `<div class="fser">Serie ${esc(serie)}</div>` : '')
     + `<div class="fsk">${skillChips(r['Skills'])}</div></div>`;
