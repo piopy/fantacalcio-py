@@ -134,7 +134,20 @@ button.danger { background: var(--bad-bg); border-color: var(--bad-bg); color: v
 .starbtn { cursor: pointer; border: 0; background: none; font-size: 16px; color: var(--faint); }
 .starbtn.on { color: var(--gold); }
 .empty { color: var(--mut); padding: 24px 8px; }
+#form-tot { color: var(--mut); font-size: 13px; margin: 4px 0; }
 #demoexp { margin: 0 0 8px; font-size: 13px; }
+#form-xi { display: flex; flex-direction: column; gap: 6px; }
+#form-cols { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; align-items: start; }
+@media (max-width: 900px) { #form-cols { grid-template-columns: 1fr; } }
+.fslot { background: var(--card); border: 1px dashed var(--line); border-radius: 8px; padding: 6px 8px; min-height: 56px; }
+.fslot .sl { font-size: 11px; color: var(--faint); display: block; }
+.fslot i { color: var(--faint); font-size: 12px; }
+.fbench { display: flex; flex-direction: column; gap: 6px; margin-bottom: 8px; }
+.fcard { background: var(--card); border: 1px solid var(--line); border-radius: 6px; padding: 4px 8px; font-size: 13px; cursor: grab; }
+.fcard small { color: var(--mut); display: block; font-size: 11px; }
+.fcard .fser { font-size: 12px; margin-top: 2px; }
+.fcard .fsk { margin-top: 3px; display: flex; flex-wrap: wrap; gap: 3px; }
+.fcard .fsk .chip { font-size: 11px; padding: 0 6px; }
 #demoexp summary { cursor: pointer; color: var(--mut); text-align: center; }
 #demoteam small, #demoteam .tot { color: var(--mut); }
 .err { color: var(--bad); font-size: 13px; margin: 4px 0; }

@@ -13,6 +13,7 @@ import pandas as pd
 import concurrent.futures
 
 from src import config
+from src.utils import norm
 
 load_dotenv()
 
@@ -61,6 +62,7 @@ def get_attributi_giocatore(url: str) -> dict:
     logger.debug(f"Scraping attributes for player from URL: {url}")
     time.sleep(randint(1200, 3000) / 1000)  # throttle anti-ban: ~2s medi per request
     attributi = dict()
+    attributi["URL"] = url.strip()
     html = requests.get(url.strip(), headers=config.HEADERS)
     soup = BeautifulSoup(html.content, "html.parser")
 
@@ -261,3 +263,23 @@ def scrape_fpd(force: bool = False):
     df = pd.DataFrame(giocatori)
     df.to_csv(config.GIOCATORI_CSV, index=False)
     logger.debug("FPD data saved to CSV.")
+
+
+def refresh_urls(urls: list) -> int:
+    """Re-scrape mirato: aggiorna in cache solo righe con questi URL. Ritorna n aggiornati."""
+    df = pd.read_csv(config.GIOCATORI_CSV)
+    n = 0
+    for url in tqdm(urls, desc="refresh-team"):
+        try:
+            att = get_attributi_giocatore(url)
+        except Exception as exc:
+            logger.error(f"{url} generated an exception: {exc}")
+            continue
+        if not att:
+            continue
+        att["URL"] = url.strip()
+        df = df[df["Nome"].map(norm) != norm(att["Nome"])]  # evita doppioni (cache vecchia senza URL)
+        df = pd.concat([df, pd.DataFrame([att])], ignore_index=True)
+        n += 1
+    df.to_csv(config.GIOCATORI_CSV, index=False)
+    return n
