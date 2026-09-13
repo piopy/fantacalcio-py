@@ -121,7 +121,7 @@ function renderList() {
     return;
   }
   const frag = document.createDocumentFragment();
-  rows.slice(0, 500).forEach(r => {
+  rows.forEach(r => {
     const n = r['Calciatore'], a = state.assigned[n], star = state.stars.includes(n), shop = state.shop[n];
     const tr = document.createElement('tr');
     if (a) tr.className = 'taken'; if (star) tr.className += ' star'; if (shop) tr.className += ' shop';
@@ -153,7 +153,6 @@ function renderList() {
     } else frag.appendChild(tr);
   });
   tb.appendChild(frag);
-  if (rows.length > 500) $('count').textContent += ' (primi 500 — restringi la ricerca)';
   tb.querySelectorAll('[data-star]').forEach(b => b.onclick = e => { e.stopPropagation(); toggleStar(b.dataset.star); });
   tb.querySelectorAll('[data-assign]').forEach(b => b.onclick = () => { expanded = b.dataset.assign; renderList(); setTimeout(() => $('as-team')?.focus(), 0); });
   bindDetail(tb);
@@ -224,7 +223,7 @@ function detailHtml(r) {
     (altChips ? `<div class="dsub">Alternative</div><div>${altChips}</div>` : '') + '</div>' : '';
   const dett = r['Dettaglio infortunio'] ? `<div>🏥 <b class="down">${esc(r['Dettaglio infortunio'])}</b></div>` : '';
   const opts = state.setup.teams.map((t, i) => `<option value="${i}"${i === state.setup.mine ? ' selected' : ''}>${esc(t)}</option>`).join('');
-  return `<div class="dhead"><span class="nm">${esc(n)}</span><span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}${eta}${naz}</span>
+  return `<div class="dhead"><span class="nm">${esc(n)}</span>${r['URL FPEDIA'] ? ` <a href="${esc(r['URL FPEDIA'])}" target="_blank" rel="noopener" title="Scheda FPEDIA">🌐</a>` : ''}<span class="sub">${esc(r['Ruolo'])} · ${esc(r[TEAMCOL])}${eta}${naz}</span>
     ${gem ? '<span class="badge gem">GEM</span>' : ''}${inj ? '<span class="badge inj">INFORTUNATO</span>' : ''}</div>
     ${dett}
     <div class="dgrid">
@@ -332,6 +331,131 @@ function renderTeams() {
   ).join('');
   $('opps').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { unassign(b.dataset.rm); renderAll(); });
   $('myteam').querySelectorAll('[data-rm]').forEach(b => b.onclick = () => { unassign(b.dataset.rm); renderAll(); });
+}
+
+// ---------- formazione ----------
+const FORM_MODS = ['3-4-3', '4-3-3', '3-5-2', '4-4-2', '5-3-2', '5-4-1', '4-5-1'];
+const formState = () => state.formazione || (state.formazione = { mod: '3-4-3', xi: {}, bench: [], benchN: 7 });
+const myRoster = () => Object.keys(state.assigned).filter(n => state.assigned[n].t === (state.setup.mine || 0));
+const formSlots = mod => {
+  const [d, c, a] = mod.split('-').map(Number);
+  const s = ['POR1'];
+  for (let i = 1; i <= d; i++) s.push('DIF' + i);
+  for (let i = 1; i <= c; i++) s.push('CEN' + i);
+  for (let i = 1; i <= a; i++) s.push('ATT' + i);
+  return s;
+};
+const slotRole = s => s.startsWith('POR') ? 'POR' : s.slice(0, 3);
+function formCard(n) {
+  const r = byName(n);
+  if (!r) return `<div class="fcard" data-n="${esc(n)}">${esc(n)} <small>?</small></div>`;
+  const badges = (isTrue(r['Consigliato']) ? ' ★' : '') + (isTrue(r['Infortunato']) || r['Dettaglio infortunio'] ? ' ⚠' : '');
+  const serie = String(r['Forma serie'] || '').split('|').map(s => s.trim()).filter(Boolean).join(' · ');
+  return `<div class="fcard" draggable="true" data-n="${esc(n)}"><b>${esc(n)}</b> <i>${esc(r[TEAMCOL] || '')}</i>${badges}`
+    + `<div>Indice <b>${r['Indice Esterno'] ?? '—'}</b> · Score ${r['Score FPY'] ?? '—'}</div>`
+    + (serie ? `<div class="fser">Serie ${esc(serie)}</div>` : '')
+    + `<div class="fsk">${skillChips(r['Skills'])}</div></div>`;
+}
+// liste: xi (ordine slot), bench (esplicita, max benchN), trib (resto)
+function formLists() {
+  const fs = formState(), ros = new Set(myRoster());
+  Object.keys(fs.xi).forEach(s => { if (!ros.has(fs.xi[s])) delete fs.xi[s]; });
+  fs.bench = (fs.bench || []).filter(n => ros.has(n) && !Object.values(fs.xi).includes(n));
+  const inXi = new Set(Object.values(fs.xi));
+  const bench = fs.bench.slice(0, fs.benchN);
+  const trib = [...ros].filter(n => !inXi.has(n) && !bench.includes(n));
+  return { fs, slots: formSlots(fs.mod), bench, trib };
+}
+function renderForm() {
+  const box = $('form-xi');
+  if (!box) return;
+  const { fs, slots, bench, trib } = formLists();
+  fs.bench = bench; // rientra overflow in tribuna
+  const fm = $('form-mod'); if (fm && fm.value !== fs.mod && FORM_MODS.includes(fs.mod)) fm.value = fs.mod;
+  const [d, c, a] = fs.mod.split('-');
+  const fd = $('form-d'), fc = $('form-c'), fa = $('form-a');
+  if (fd && document.activeElement !== fd) fd.value = d;
+  if (fc && document.activeElement !== fc) fc.value = c;
+  if (fa && document.activeElement !== fa) fa.value = a;
+  const bn = $('form-bn'); if (bn && document.activeElement !== bn) bn.value = fs.benchN;
+  if (!DATA.length) { box.innerHTML = '<span class="empty">Carica il listone per schierare.</span>'; $('form-bench').innerHTML = ''; $('form-trib').innerHTML = ''; $('form-tot').textContent = ''; return; }
+  box.innerHTML = slots.map(s => {
+    const n = fs.xi[s];
+    return `<div class="fslot" data-s="${s}"><span class="sl">${s}</span>${n ? formCard(n) : '<i>vuoto</i>'}</div>`;
+  }).join('');
+  const byExt = list => list.slice().sort((a, b) => {
+    const x = byName(a), y = byName(b);
+    return (num(y?.['Indice Esterno']) ?? -1) - (num(x?.['Indice Esterno']) ?? -1);
+  });
+  const grp = list => ROLES.map(r => {
+    const rows = byExt(list.filter(n => roleOf(byName(n)?.['Ruolo']) === r));
+    return rows.length ? `<h5>${r}</h5><div class="fbench">` + rows.map(formCard).join('') + '</div>' : '';
+  }).join('') || '<i>—</i>';
+  $('form-bench').innerHTML = grp(bench);
+  $('form-trib').innerHTML = grp(trib);
+  const sum = names => {
+    let sc = 0, ex = 0;
+    names.forEach(n => { const r = byName(n); if (!r) return; const s = num(r['Score FPY']), e = num(r['Indice Esterno']); if (s !== null) sc += s; if (e !== null) ex += e; });
+    return `ΣScore ${Math.round(sc * 10) / 10} · ΣIndice ${Math.round(ex * 10) / 10}`;
+  };
+  $('form-tot').textContent = `Titolari (${slots.filter(s => fs.xi[s]).length}/${slots.length}): ${sum(Object.values(fs.xi))} — Panchina (${bench.length}): ${sum(bench)} — Tribuna (${trib.length}): ${sum(trib)}`;
+  bindForm(box);
+}
+// tap: da xi -> panchina (o tribuna se piena); da panchina -> primo slot libero di ruolo; da tribuna -> panchina (swap stesso ruolo se piena)
+function formTap(n) {
+  const { fs, slots, bench } = formLists();
+  const inXi = Object.keys(fs.xi).find(s => fs.xi[s] === n);
+  if (inXi) {
+    delete fs.xi[inXi];
+    if (!fs.bench.includes(n) && fs.bench.length < fs.benchN) fs.bench.push(n);
+  } else if (fs.bench.includes(n)) {
+    const r = byName(n) && roleOf(byName(n)['Ruolo']);
+    const s = slots.find(s => slotRole(s) === r && !fs.xi[s]);
+    if (!s) return;
+    fs.xi[s] = n; fs.bench = fs.bench.filter(x => x !== n);
+  } else {
+    if (fs.bench.length < fs.benchN) fs.bench.push(n);
+    else {
+      const r = byName(n) && roleOf(byName(n)['Ruolo']);
+      const i = fs.bench.findLastIndex(x => byName(x) && roleOf(byName(x)['Ruolo']) === r);
+      if (i < 0) return;
+      fs.bench[i] = n;
+    }
+  }
+  save(); renderForm();
+}
+function bindForm(box) {
+  box.querySelectorAll('.fslot').forEach(sl => {
+    sl.ondragover = e => e.preventDefault();
+    sl.ondrop = e => { e.preventDefault(); const n = e.dataTransfer.getData('text/plain'); if (n) formPlace(sl.dataset.s, n); };
+    sl.onclick = () => formUnslot(sl.dataset.s); // tap su slot occupato: svuota
+  });
+  document.querySelectorAll('#view-form .fcard').forEach(c => {
+    c.ondragstart = e => e.dataTransfer.setData('text/plain', c.dataset.n);
+    c.onclick = e => { e.stopPropagation(); formTap(c.dataset.n); };
+  });
+  const dropTo = (id, fn) => { const el = $(id); if (el) { el.ondragover = e => e.preventDefault(); el.ondrop = e => { e.preventDefault(); fn(e.dataTransfer.getData('text/plain')); }; } };
+  dropTo('form-bench', n => { if (!n) return; const { fs } = formLists(); const s = Object.keys(fs.xi).find(k => fs.xi[k] === n); if (s) delete fs.xi[s]; if (!fs.bench.includes(n) && fs.bench.length < fs.benchN) fs.bench.push(n); save(); renderForm(); });
+  dropTo('form-trib', n => { if (!n) return; const { fs } = formLists(); const s = Object.keys(fs.xi).find(k => fs.xi[k] === n); if (s) delete fs.xi[s]; fs.bench = fs.bench.filter(x => x !== n); save(); renderForm(); });
+}
+function formPlace(slot, n) {
+  const fs = formState();
+  if (!myRoster().includes(n)) return;
+  if (byName(n) && roleOf(byName(n)['Ruolo']) !== slotRole(slot)) return; // ruolo errato: ignora
+  const prev = Object.keys(fs.xi).find(s => fs.xi[s] === n);
+  if (prev === slot) return;
+  const cur = fs.xi[slot];
+  if (prev) { if (cur) fs.xi[prev] = cur; else delete fs.xi[prev]; } // swap o sposta
+  else fs.bench = (fs.bench || []).filter(x => x !== n);
+  fs.xi[slot] = n;
+  save(); renderForm();
+}
+function formUnslot(slot) {
+  const fs = formState(), n = fs.xi[slot];
+  if (!n) return;
+  delete fs.xi[slot];
+  if (!fs.bench.includes(n) && fs.bench.length < fs.benchN) fs.bench.push(n);
+  save(); renderForm();
 }
 
 // ---------- setup ----------
@@ -557,7 +681,7 @@ function exportState() {
   a.href = URL.createObjectURL(new Blob([JSON.stringify(state)], { type: 'application/json' }));
   a.download = 'asta-stato.json'; a.click();
 }
-function renderAll() { renderList(); renderColHelp(); renderTeams(); renderSetup(); renderInf(); renderRose(); }
+function renderAll() { renderList(); renderColHelp(); renderTeams(); renderForm(); renderSetup(); renderInf(); renderRose(); }
 
 function loadJson(j) {
   const rows = Array.isArray(j) ? j : j.players || j.records || j.data || j.rows;
@@ -645,6 +769,27 @@ function init() {
     rd.readAsText(f);
   };
   $('s-reset').onclick = () => { if (confirm('Azzera assegnazioni?')) { state.assigned = {}; state.hist = []; save(); renderAll(); } };
+  const fm = $('form-mod');
+  if (fm && !fm.options.length) FORM_MODS.forEach(m => { const o = document.createElement('option'); o.value = o.textContent = m; fm.appendChild(o); });
+  const formSetMod = mod => {
+    const fs = formState(), keep = {};
+    formSlots(mod).forEach(s => { // tiene piazzati compatibili col nuovo modulo
+      const cand = Object.values(fs.xi).find(n => byName(n) && roleOf(byName(n)['Ruolo']) === slotRole(s) && !Object.values(keep).includes(n));
+      if (cand) keep[s] = cand;
+    });
+    fs.mod = mod; fs.xi = keep; save(); renderForm();
+  };
+  if (fm) fm.onchange = () => formSetMod(fm.value);
+  ['form-d', 'form-c', 'form-a'].forEach(id => {
+    const el = $(id);
+    if (el) el.onchange = () => {
+      const d = +$('form-d').value, c = +$('form-c').value, a = +$('form-a').value;
+      if ([d, c, a].every(v => v >= 1 && v <= 8) && d + c + a === 10) formSetMod(`${d}-${c}-${a}`);
+      else renderForm(); // ripristina valori validi
+    };
+  });
+  const fbn = $('form-bn'); if (fbn) fbn.onchange = () => { formState().benchN = Math.max(0, +fbn.value || 0); save(); renderForm(); };
+  const fc = $('form-clear'); if (fc) fc.onclick = () => { const fs = formState(); fs.xi = {}; fs.bench = []; save(); renderForm(); };
   const dx = $('demoexp'); if (dx) dx.addEventListener('toggle', () => { if (dx.open && !$('demoteam').innerHTML) demoSquad(); });
   renderAll();
 }

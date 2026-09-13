@@ -19,6 +19,7 @@
     <nav>
       <button data-view="list" class="active">Listone</button>
       <button data-view="teams">Asta</button>
+      <button data-view="form">Formazione</button>
       <button data-view="seriea">Serie A</button>
       <button data-view="inf">Infortunati</button>
       <button data-view="setup">Setup</button>
@@ -60,6 +61,23 @@
         </thead>
         <tbody id="tbody"></tbody>
       </table>
+    </section>
+    <section id="view-form" class="view" hidden>
+      <div class="row">
+        <label>Modulo <select id="form-mod"></select></label>
+        <label title="Modulo personalizzato (difensori-centrocampisti-attaccanti, somma 10)">Custom <input id="form-d" type="number" min="1" max="8" style="width:48px">-<input id="form-c" type="number" min="1" max="8" style="width:48px">-<input id="form-a" type="number" min="1" max="8" style="width:48px"></label>
+        <label title="Quanti vanno in panchina, resto in tribuna">Panchina <input id="form-bn" type="number" min="0" style="width:52px"></label>
+        <button id="form-clear">Svuota</button>
+      </div>
+      <div id="form-tot" class="mut"></div>
+      <div id="form-cols">
+      <div><h4>Titolari</h4>
+      <div id="form-xi"></div></div>
+      <div><h4>Panchina</h4>
+      <div id="form-bench"></div></div>
+      <div><h4>Tribuna</h4>
+      <div id="form-trib"></div></div>
+      </div>
     </section>
     <section id="view-teams" class="view" hidden>
       <table id="sumtbl">
@@ -124,7 +142,7 @@
       </div>
     </section>
   </main>
-  <script src="app.js?v=2"></script>
+  <script src="app.js?v=3"></script>
 </body>
 
 </html>

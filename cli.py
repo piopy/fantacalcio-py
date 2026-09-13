@@ -28,6 +28,15 @@ def cmd_run():
     force_all = Confirm.ask("Forza tutto (Understat+ext+rose/inf)?", default=False)
     no_ext = Confirm.ask("Salta provider esterno?", default=False)
     argv = ["pipeline.py", "--anno", str(anno), "--partecipanti", str(part), "--crediti", str(cred)]
+    try:
+        lst = console.input("Listone xlsx Qt.A (invio=salta): ").strip()
+    except (KeyboardInterrupt, EOFError):
+        lst = ""
+    if lst:
+        if not os.path.exists(lst):
+            console.print(f"[red]File non trovato: {lst} — continuo senza listone[/red]")
+        else:
+            argv += ["--listone", lst]
     if force:
         argv.append("--force")
     if force_all:
@@ -98,10 +107,40 @@ def cmd_inspect():
     console.print(t)
 
 
+def cmd_refresh():
+    default = "data/output/asta-stato.json"
+    try:
+        path = console.input(f"File stato asta [{default}]: ").strip() or default
+    except (KeyboardInterrupt, EOFError):
+        return
+    if not os.path.exists(path):
+        console.print(f"[red]File non trovato: {path} (esportalo da docs/ Setup)[/red]")
+        return
+    anno = _ask_int("Anno", 2026)
+    part = _ask_int("Partecipanti", 10)
+    cred = _ask_int("Crediti", 1000)
+    sys.argv = ["pipeline.py", "--anno", str(anno), "--partecipanti", str(part),
+                "--crediti", str(cred), "--refresh-team", path]
+    try:
+        lst = console.input("Listone xlsx Qt.A (invio=salta): ").strip()
+    except (KeyboardInterrupt, EOFError):
+        lst = ""
+    if lst:
+        if not os.path.exists(lst):
+            console.print(f"[red]File non trovato: {lst} — continuo senza listone[/red]")
+        else:
+            sys.argv += ["--listone", lst]
+    import pipeline
+    import importlib
+    importlib.reload(pipeline)
+    pipeline.main()
+
+
 MENU = [
     ("1", "Run pipeline", cmd_run),
     ("2", "Status cache + output", cmd_status),
     ("3", "Inspect ultimo output", cmd_inspect),
+    ("4", "Refresh mia squadra (solo assegnati a 'mia')", cmd_refresh),
     ("0", "Esci", None),
 ]
 
