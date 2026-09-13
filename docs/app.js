@@ -121,7 +121,7 @@ function renderList() {
     return;
   }
   const frag = document.createDocumentFragment();
-  rows.slice(0, 500).forEach(r => {
+  rows.forEach(r => {
     const n = r['Calciatore'], a = state.assigned[n], star = state.stars.includes(n), shop = state.shop[n];
     const tr = document.createElement('tr');
     if (a) tr.className = 'taken'; if (star) tr.className += ' star'; if (shop) tr.className += ' shop';
@@ -153,7 +153,6 @@ function renderList() {
     } else frag.appendChild(tr);
   });
   tb.appendChild(frag);
-  if (rows.length > 500) $('count').textContent += ' (primi 500 — restringi la ricerca)';
   tb.querySelectorAll('[data-star]').forEach(b => b.onclick = e => { e.stopPropagation(); toggleStar(b.dataset.star); });
   tb.querySelectorAll('[data-assign]').forEach(b => b.onclick = () => { expanded = b.dataset.assign; renderList(); setTimeout(() => $('as-team')?.focus(), 0); });
   bindDetail(tb);
